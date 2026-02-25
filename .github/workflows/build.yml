@@ -32,26 +32,13 @@ jobs:
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
         echo "KernelSU version: $(cat KernelSU/version)"
 
-    - name: Find defconfig
-      run: |
-        cd kernel
-        echo "=== Available defconfigs ==="
-        ls arch/arm64/configs/ | grep -i "m127\|m12\|a12\|universal3830\|exynos850" || ls arch/arm64/configs/ | head -20
-
     - name: Configure kernel
       run: |
         cd kernel
         export ARCH=arm64
         export CROSS_COMPILE=aarch64-linux-gnu-
-        DEFCONFIG=$(ls arch/arm64/configs/ | grep -i "m127\|m12s\|a12s" | head -1)
-        if [ -z "$DEFCONFIG" ]; then
-          DEFCONFIG=$(ls arch/arm64/configs/ | grep -i "universal3830\|exynos850" | head -1)
-        fi
-        if [ -z "$DEFCONFIG" ]; then
-          DEFCONFIG=$(ls arch/arm64/configs/ | head -1)
-        fi
-        echo "Using defconfig: $DEFCONFIG"
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- $DEFCONFIG
+        echo "Using defconfig: exynos850-m12nsxx_defconfig"
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- exynos850-m12nsxx_defconfig
         scripts/config --enable CONFIG_KSU
         scripts/config --enable CONFIG_OVERLAY_FS
         scripts/config --disable CONFIG_LOCALVERSION_AUTO
