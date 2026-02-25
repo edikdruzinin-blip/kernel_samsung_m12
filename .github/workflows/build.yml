@@ -11,50 +11,17 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update -y
-        sudo apt-get install -y \
-          git bc bison flex libssl-dev make libc6-dev libncurses5-dev \
-          crossbuild-essential-arm64 python3 zip unzip \
-          libelf-dev gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu \
-          ccache
+        sudo apt-get install -y git bc bison flex libssl-dev make libc6-dev libncurses5-dev crossbuild-essential-arm64 python3 zip unzip libelf-dev gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu ccache
 
     - name: Clone kernel source
       run: |
         git clone --depth=1 https://github.com/maazm7d/kernel_samsung_m12 kernel
-        cd kernel
-        echo "Commit: $(git log --oneline -1)"
+        cd kernel && echo "Commit: $(git log --oneline -1)"
 
     - name: Fix Mali GPU Kconfig
       run: |
-        python3 -c "
-content = '''config MALI_DDK_VERSION
-\tbool \"Enable MALI DDK Version Selection\"
-\tdefault y
-
-if MALI_DDK_VERSION
-choice
-\tprompt \"version Configuration\"
-\tdepends on MALI_DDK_VERSION
-\tdefault MALI_BIFROST_R26P0
-\thelp
-\t  Select the gpu support version.
-config MALI_BIFROST_R19P0
-\tdepends on MALI_DDK_VERSION
-\tbool \"Bifrost r19p0 driver\"
-config MALI_BIFROST_R26P0
-\tdepends on MALI_DDK_VERSION
-\tbool \"Bifrost r26p0 driver\"
-config MALI_BIFROST_R32P1
-\tdepends on MALI_DDK_VERSION
-\tbool \"Bifrost r32p1 driver\"
-config MALI_BIFROST_R38P1
-\tdepends on MALI_DDK_VERSION
-\tbool \"Bifrost r38p1 driver\"
-endchoice
-endif
-'''
-open('kernel/drivers/gpu/arm/Kconfig', 'w').write(content)
-print('Kconfig fixed')
-"
+        echo "Y29uZmlnIE1BTElfRERLX1ZFUlNJT04KCWJvb2wgIkVuYWJsZSBNQUxJIERESyBWZXJzaW9uIFNlbGVjdGlvbiIKCWRlZmF1bHQgeQoKaWYgTUFMSV9EREtfVkVSU0lPTgpjaG9pY2UKCXByb21wdCAidmVyc2lvbiBDb25maWd1cmF0aW9uIgoJZGVwZW5kcyBvbiBNQUxJX0RES19WRVJTSU9OCglkZWZhdWx0IE1BTElfQklGUk9TVF9SMjZQMAoJaGVscAoJICBTZWxlY3QgdGhlIGdwdSBzdXBwb3J0IHZlcnNpb24uCmNvbmZpZyBNQUxJX0JJRlJPU1RfUjE5UDAKCWRlcGVuZHMgb24gTUFMSV9EREtfVkVSU0lPTgoJYm9vbCAiQmlmcm9zdCByMTlwMCBkcml2ZXIiCmNvbmZpZyBNQUxJX0JJRlJPU1RfUjI2UDAKCWRlcGVuZHMgb24gTUFMSV9EREtfVkVSU0lPTgoJYm9vbCAiQmlmcm9zdCByMjZwMCBkcml2ZXIiCmNvbmZpZyBNQUxJX0JJRlJPU1RfUjMyUDEKCWRlcGVuZHMgb24gTUFMSV9EREtfVkVSU0lPTgoJYm9vbCAiQmlmcm9zdCByMzJwMSBkcml2ZXIiCmNvbmZpZyBNQUxJX0JJRlJPU1RfUjM4UDEKCWRlcGVuZHMgb24gTUFMSV9EREtfVkVSU0lPTgoJYm9vbCAiQmlmcm9zdCByMzhwMSBkcml2ZXIiCmVuZGNob2ljZQplbmRpZgo=" | base64 -d > kernel/drivers/gpu/arm/Kconfig
+        echo "Kconfig fixed"
 
     - name: Apply KernelSU patch
       run: |
@@ -64,8 +31,6 @@ print('Kconfig fixed')
     - name: Configure kernel
       run: |
         cd kernel
-        export ARCH=arm64
-        export CROSS_COMPILE=aarch64-linux-gnu-
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- universal3830_defconfig
         scripts/config --enable CONFIG_KSU
         scripts/config --enable CONFIG_OVERLAY_FS
@@ -76,44 +41,19 @@ print('Kconfig fixed')
     - name: Build kernel
       run: |
         cd kernel
-        make ARCH=arm64 \
-          CROSS_COMPILE=aarch64-linux-gnu- \
-          CC=aarch64-linux-gnu-gcc \
-          -j$(nproc) Image 2>&1 | tail -150
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=aarch64-linux-gnu-gcc -j$(nproc) Image 2>&1 | tail -150
         ls -lh arch/arm64/boot/Image
 
     - name: Clone AnyKernel3
-      run: |
-        git clone --depth=1 https://github.com/osm0sis/AnyKernel3 anykernel
+      run: git clone --depth=1 https://github.com/osm0sis/AnyKernel3 anykernel
 
     - name: Package kernel
       run: |
         cp kernel/arch/arm64/boot/Image anykernel/
-        python3 -c "
-content = '''kernel.string=SM-M127F KernelSU Kernel
-do.devicecheck=1
-do.modules=0
-do.systemless=1
-do.cleanup=1
-do.cleanuponabort=0
-device.name1=m12
-device.name2=m12nacho
-device.name3=SM-M127F
-supported.versions=11
-
-. tools/ak3-core.sh
-
-dump_boot;
-patch_cmdline \"androidboot.selinux\" \"androidboot.selinux=permissive\";
-patch_cmdline \"selinux\" \"selinux=0\";
-patch_cmdline \"enforcing\" \"enforcing=0\";
-patch_cmdline \"zram.num_devices\" \"zram.num_devices=1\";
-write_boot;
-'''
-open('anykernel/anykernel.sh', 'w').write(content)
-"
-        cd anykernel
-        zip -r9 ../SM-M127F_KernelSU.zip . -x "*.git*" "*.github*" "*.md"
+        echo "ZHVtcF9ib290OwpwYXRjaF9jbWRsaW5lICJhbmRyb2lkYm9vdC5zZWxpbnV4IiAiYW5kcm9pZGJvb3Quc2VsaW51eD1wZXJtaXNzaXZlIjsKcGF0Y2hfY21kbGluZSAic2VsaW51eCIgInNlbGludXg9MCI7CnBhdGNoX2NtZGxpbmUgImVuZm9yY2luZyIgImVuZm9yY2luZz0wIjsKcGF0Y2hfY21kbGluZSAienJhbS5udW1fZGV2aWNlcyIgInpyYW0ubnVtX2RldmljZXM9MSI7CndyaXRlX2Jvb3Q7" | base64 -d > /tmp/ak_cmds.sh
+        printf 'kernel.string=SM-M127F KernelSU Kernel\ndo.devicecheck=1\ndo.modules=0\ndo.systemless=1\ndo.cleanup=1\ndo.cleanuponabort=0\ndevice.name1=m12\ndevice.name2=m12nacho\ndevice.name3=SM-M127F\nsupported.versions=11\n\n. tools/ak3-core.sh\n\n' > anykernel/anykernel.sh
+        cat /tmp/ak_cmds.sh >> anykernel/anykernel.sh
+        cd anykernel && zip -r9 ../SM-M127F_KernelSU.zip . -x "*.git*" "*.github*" "*.md"
         ls -lh ../SM-M127F_KernelSU.zip
 
     - name: Upload artifact
