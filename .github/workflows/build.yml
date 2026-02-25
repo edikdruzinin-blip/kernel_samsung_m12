@@ -15,7 +15,7 @@ jobs:
           git bc bison flex libssl-dev make libc6-dev libncurses5-dev \
           crossbuild-essential-arm64 python3 zip unzip \
           libelf-dev gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu \
-          clang lld llvm ccache
+          ccache
 
     - name: Clone kernel source
       run: |
@@ -29,32 +29,32 @@ jobs:
       run: |
         cd kernel
         cat > drivers/gpu/arm/Kconfig << 'KCONFIG_EOF'
-        config MALI_DDK_VERSION
-          bool "Enable MALI DDK Version Selection"
-          default y
+config MALI_DDK_VERSION
+  bool "Enable MALI DDK Version Selection"
+  default y
 
-        if MALI_DDK_VERSION
-        choice
-          prompt "version Configuration"
-          depends on MALI_DDK_VERSION
-          default MALI_BIFROST_R26P0
-          help
-            Select the gpu support version.
-        config MALI_BIFROST_R19P0
-          depends on MALI_DDK_VERSION
-          bool "Bifrost r19p0 driver"
-        config MALI_BIFROST_R26P0
-          depends on MALI_DDK_VERSION
-          bool "Bifrost r26p0 driver"
-        config MALI_BIFROST_R32P1
-          depends on MALI_DDK_VERSION
-          bool "Bifrost r32p1 driver"
-        config MALI_BIFROST_R38P1
-          depends on MALI_DDK_VERSION
-          bool "Bifrost r38p1 driver"
-        endchoice
-        endif
-        KCONFIG_EOF
+if MALI_DDK_VERSION
+choice
+  prompt "version Configuration"
+  depends on MALI_DDK_VERSION
+  default MALI_BIFROST_R26P0
+  help
+    Select the gpu support version.
+config MALI_BIFROST_R19P0
+  depends on MALI_DDK_VERSION
+  bool "Bifrost r19p0 driver"
+config MALI_BIFROST_R26P0
+  depends on MALI_DDK_VERSION
+  bool "Bifrost r26p0 driver"
+config MALI_BIFROST_R32P1
+  depends on MALI_DDK_VERSION
+  bool "Bifrost r32p1 driver"
+config MALI_BIFROST_R38P1
+  depends on MALI_DDK_VERSION
+  bool "Bifrost r38p1 driver"
+endchoice
+endif
+KCONFIG_EOF
 
     - name: Apply KernelSU patch
       run: |
@@ -70,17 +70,24 @@ jobs:
         scripts/config --enable CONFIG_KSU
         scripts/config --enable CONFIG_OVERLAY_FS
         scripts/config --disable CONFIG_LOCALVERSION_AUTO
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig || true
-        grep "CONFIG_KSU" .config || echo "WARNING: CONFIG_KSU not found"
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+        grep "CONFIG_KSU" .config
 
     - name: Build kernel
       run: |
         cd kernel
         export ARCH=arm64
         export CROSS_COMPILE=aarch64-linux-gnu-
+        export CC=aarch64-linux-gnu-gcc
+        export LD=aarch64-linux-gnu-ld
+        export AR=aarch64-linux-gnu-ar
+        export NM=aarch64-linux-gnu-nm
+        export OBJCOPY=aarch64-linux-gnu-objcopy
+        export OBJDUMP=aarch64-linux-gnu-objdump
         make ARCH=arm64 \
           CROSS_COMPILE=aarch64-linux-gnu- \
-          -j$(nproc) Image 2>&1 | tail -200
+          CC=aarch64-linux-gnu-gcc \
+          -j$(nproc) Image 2>&1 | tail -150
         ls -lh arch/arm64/boot/Image
 
     - name: Clone AnyKernel3
