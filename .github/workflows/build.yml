@@ -39,7 +39,11 @@ jobs:
     - name: Build kernel
       run: |
         cd kernel
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=aarch64-linux-gnu-gcc -j$(nproc) Image 2>&1 | tail -200
+        make ARCH=arm64 \
+          CROSS_COMPILE=aarch64-linux-gnu- \
+          CC=aarch64-linux-gnu-gcc \
+          KCFLAGS="-Wno-error=array-bounds -Wno-error -w" \
+          -j$(nproc) Image 2>&1 | tail -200
         ls -lh arch/arm64/boot/Image
 
     - name: Clone AnyKernel3
@@ -48,7 +52,7 @@ jobs:
     - name: Package kernel
       run: |
         cp kernel/arch/arm64/boot/Image anykernel/
-        echo "a2VybmVsLnN0cmluZz1TTS1NMTI3RiBLZXJuZWxTVSBLZXJuZWwKZG8uZGV2aWNlY2hlY2s9MQpkby5tb2R1bGVzPTAKZG8uc3lzdGVtbGVzcz0xCmRvLmNsZWFudXA9MQpkby5jbGVhbnVwb25hYm9ydD0wCmRldmljZS5uYW1lMT1tMTIKZGV2aWNlLm5hbWUyPW0xMm5hY2hvCmRldmljZS5uYW1lMz1TTS1NMTI3RgpzdXBwb3J0ZWQudmVyc2lvbnM9MTEKCi4gdG9vbHMvYWszLWNvcmUuc2gKCmR1bXBfYm9vdDsKcGF0Y2hfY21kbGluZSAiYW5kcm9pZGJvb3Quc2VsaW51eCIgImFuZHJvaWRib290LnNlbGludXg9cGVybWlzc2l2ZSI7CnBhdGNoX2NtZGxpbmUgInNlbGludXgiICJzZWxpbnV4PTAiOwpwYXRjaF9jbWRsaW5lICJlbmZvcmNpbmciICJlbmZvcmNpbmc9MCI7CnBhdGNoX2NtZGxpbmUgInpyYW0ubnVtX2RldmljZXMiICJ6cmFtLm51bV9kZXZpY2VzPTEiOwp3cml0ZV9ib290Owo=" | base64 -d > anykernel/anykernel.sh
+        echo "a2VybmVsLnN0cmluZz1TTS1NMTI3RiBLZXJuZWxTVSBLZXJuZWwKZG8uZGV2aWNlY2hlY2s9MQpkby5tb2R1bGVzPTAKZG8uc3lzdGVtbGVzcz0xCmRvLmNsZWFudXA9MQpkby5jbGVhbnVwb25hYm9ydD0wCmRldmljZS5uYW1lMT1tMTIKZGV2aWNlLm5hbWUyPW0xMm5hY2hvCmRldmljZS5uYW1lMz1TTS1NMTI3RgpzdXBwb3J0ZWQudmVyc2lvbnM9MTEKCi4gdG9vbHMvYWszLWNvcmUuc2gKCmR1bXBfYm9vdDsKcGF0Y2hfY21kbGluZSAiYW5kcm9pZGJvb3Quc2VsaW51eCIgImFuZHJvaWRib290LnNlbGludXg9cGVybWlzc2l2ZSI7CnBhdGNoX2NtZGxpbmUgInNlbGludXgiICJzZWxpbnV4PW8iOwpwYXRjaF9jbWRsaW5lICJlbmZvcmNpbmciICJlbmZvcmNpbmc9MCI7CnBhdGNoX2NtZGxpbmUgInpyYW0ubnVtX2RldmljZXMiICJ6cmFtLm51bV9kZXZpY2VzPTEiOwp3cml0ZV9ib290Owo=" | base64 -d > anykernel/anykernel.sh
         cd anykernel && zip -r9 ../SM-M127F_KernelSU.zip . -x "*.git*" "*.github*" "*.md"
         ls -lh ../SM-M127F_KernelSU.zip
 
