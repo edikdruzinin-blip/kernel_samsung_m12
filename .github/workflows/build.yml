@@ -1,0 +1,125 @@
+name: Build KernelSU Kernel for SM-M127F
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y \
+          git bc bison flex libssl-dev make libc6-dev libncurses5-dev \
+          crossbuild-essential-arm64 python3 zip unzip \
+          libelf-dev gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu \
+          clang lld llvm ccache
+
+    - name: Clone kernel source
+      run: |
+        git clone --depth=1 \
+          https://github.com/maazm7d/kernel_samsung_m12 \
+          kernel
+        cd kernel
+        echo "Branch: $(git branch --show-current)"
+        echo "Commit: $(git log --oneline -1)"
+
+    - name: Apply KernelSU patch
+      run: |
+        cd kernel
+        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+        echo "KernelSU version: $(cat KernelSU/version)"
+
+    - name: Find defconfig
+      run: |
+        cd kernel
+        echo "=== Available defconfigs ==="
+        ls arch/arm64/configs/ | grep -i "m127\|m12\|a12\|universal3830\|exynos850" || ls arch/arm64/configs/ | head -20
+
+    - name: Configure kernel
+      run: |
+        cd kernel
+        export ARCH=arm64
+        export CROSS_COMPILE=aarch64-linux-gnu-
+
+        # Найдём правильный defconfig
+        DEFCONFIG=$(ls arch/arm64/configs/ | grep -i "m127\|m12s\|a12s" | head -1)
+        if [ -z "$DEFCONFIG" ]; then
+          DEFCONFIG=$(ls arch/arm64/configs/ | grep -i "universal3830\|exynos850" | head -1)
+        fi
+        if [ -z "$DEFCONFIG" ]; then
+          DEFCONFIG=$(ls arch/arm64/configs/ | head -1)
+        fi
+        echo "Using defconfig: $DEFCONFIG"
+        echo "DEFCONFIG=$DEFCONFIG" >> $GITHUB_ENV
+
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- $DEFCONFIG
+
+        # Включаем KernelSU
+        scripts/config --enable CONFIG_KSU
+        scripts/config --enable CONFIG_OVERLAY_FS
+        scripts/config --disable CONFIG_LOCALVERSION_AUTO
+
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+        grep "CONFIG_KSU" .config
+
+    - name: Build kernel
+      run: |
+        cd kernel
+        export ARCH=arm64
+        export CROSS_COMPILE=aarch64-linux-gnu-
+
+        make ARCH=arm64 \
+          CROSS_COMPILE=aarch64-linux-gnu- \
+          -j$(nproc) Image 2>&1 | tail -100
+
+        ls -lh arch/arm64/boot/Image
+        echo "BUILD_SUCCESS=true" >> $GITHUB_ENV
+
+    - name: Clone AnyKernel3
+      run: |
+        git clone --depth=1 https://github.com/osm0sis/AnyKernel3 anykernel
+
+    - name: Package kernel
+      run: |
+        cp kernel/arch/arm64/boot/Image anykernel/
+
+        cat > anykernel/anykernel.sh << 'AKEOF'
+# AnyKernel3 config
+kernel.string=SM-M127F KernelSU Kernel
+do.devicecheck=1
+do.modules=0
+do.systemless=1
+do.cleanup=1
+do.cleanuponabort=0
+device.name1=m12
+device.name2=m12nacho
+device.name3=SM-M127F
+supported.versions=11
+
+. tools/ak3-core.sh
+
+dump_boot;
+
+# Patch cmdline
+patch_cmdline "androidboot.selinux" "androidboot.selinux=permissive";
+patch_cmdline "selinux" "selinux=0";
+patch_cmdline "enforcing" "enforcing=0";
+patch_cmdline "androidboot.warranty_bit" "androidboot.warranty_bit=0";
+patch_cmdline "zram.num_devices" "zram.num_devices=1";
+
+write_boot;
+AKEOF
+
+        cd anykernel
+        zip -r9 ../SM-M127F_KernelSU.zip . -x "*.git*" "*.github*" "*.md"
+        ls -lh ../SM-M127F_KernelSU.zip
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: SM-M127F_KernelSU
+        path: SM-M127F_KernelSU.zip
+        retention-days: 7
