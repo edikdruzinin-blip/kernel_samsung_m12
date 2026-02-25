@@ -25,20 +25,31 @@ jobs:
         cd kernel
         echo "Commit: $(git log --oneline -1)"
 
+    - name: Fix Mali GPU Kconfig
+      run: |
+        cd kernel
+        # Удаляем строки с $(PLATFORM_VERSION) - не поддерживается в kconfig 4.19
+        grep -n "PLATFORM_VERSION" drivers/gpu/arm/Kconfig
+        sed -i '/PLATFORM_VERSION/d' drivers/gpu/arm/Kconfig
+        # Устанавливаем дефолт для Android 11
+        sed -i 's/default MALI_BIFROST_R26P0$/default MALI_BIFROST_R26P0\n\tdefault MALI_BIFROST_R26P0/' drivers/gpu/arm/Kconfig || true
+        echo "=== Fixed, remaining errors check ==="
+        python3 -c "
+        import re
+        with open('drivers/gpu/arm/Kconfig') as f:
+            content = f.read()
+        # Remove all 'default X if EXPR' lines with shell syntax
+        content = re.sub(r'\tdefault \S+ if \$\([^)]+\)[^\n]*\n', '', content)
+        with open('drivers/gpu/arm/Kconfig', 'w') as f:
+            f.write(content)
+        print('Done')
+        "
+        sed -n '18,30p' drivers/gpu/arm/Kconfig
+
     - name: Apply KernelSU patch
       run: |
         cd kernel
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-
-    - name: Fix Mali GPU Kconfig
-      run: |
-        cd kernel
-        echo "=== drivers/gpu/arm/Kconfig lines 20-30 ==="
-        sed -n '20,30p' drivers/gpu/arm/Kconfig
-        # Фиксим синтаксис Kconfig - заменяем ---help--- на help
-        find drivers/gpu/arm -name "Kconfig" | xargs sed -i 's/---help---/help/g' 2>/dev/null || true
-        # Проверим ещё раз
-        sed -n '20,30p' drivers/gpu/arm/Kconfig
 
     - name: Configure kernel
       run: |
