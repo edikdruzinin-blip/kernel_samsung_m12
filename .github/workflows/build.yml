@@ -11,22 +11,16 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update -y
-        sudo apt-get install -y \
-          git bc bison flex libssl-dev make libc6-dev libncurses5-dev \
-          crossbuild-essential-arm64 python3 zip unzip \
-          libelf-dev gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu \
-          ccache
+        sudo apt-get install -y git bc bison flex libssl-dev make libc6-dev libncurses5-dev crossbuild-essential-arm64 python3 zip unzip libelf-dev gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu ccache
 
     - name: Clone kernel source
       run: |
         git clone --depth=1 https://github.com/maazm7d/kernel_samsung_m12 kernel
-        cd kernel
-        echo "Commit: $(git log --oneline -1)"
+        cd kernel && echo "Commit: $(git log --oneline -1)"
 
     - name: Fix Mali GPU Kconfig
       run: |
         echo "Y29uZmlnIE1BTElfRERLX1ZFUlNJT04KCWJvb2wgIkVuYWJsZSBNQUxJIERESyBWZXJzaW9uIFNlbGVjdGlvbiIKCWRlZmF1bHQgeQoKaWYgTUFMSV9EREtfVkVSU0lPTgpjaG9pY2UKCXByb21wdCAidmVyc2lvbiBDb25maWd1cmF0aW9uIgoJZGVwZW5kcyBvbiBNQUxJX0RES19WRVJTSU9OCglkZWZhdWx0IE1BTElfQklGUk9TVF9SMjZQMAoJaGVscAoJICBTZWxlY3QgdGhlIGdwdSBzdXBwb3J0IHZlcnNpb24uCmNvbmZpZyBNQUxJX0JJRlJPU1RfUjE5UDAKCWRlcGVuZHMgb24gTUFMSV9EREtfVkVSU0lPTgoJYm9vbCAiQmlmcm9zdCByMTlwMCBkcml2ZXIiCmNvbmZpZyBNQUxJX0JJRlJPU1RfUjI2UDAKCWRlcGVuZHMgb24gTUFMSV9EREtfVkVSU0lPTgoJYm9vbCAiQmlmcm9zdCByMjZwMCBkcml2ZXIiCmNvbmZpZyBNQUxJX0JJRlJPU1RfUjMyUDEKCWRlcGVuZHMgb24gTUFMSV9EREtfVkVSU0lPTgoJYm9vbCAiQmlmcm9zdCByMzJwMSBkcml2ZXIiCmNvbmZpZyBNQUxJX0JJRlJPU1RfUjM4UDEKCWRlcGVuZHMgb24gTUFMSV9EREtfVkVSU0lPTgoJYm9vbCAiQmlmcm9zdCByMzhwMSBkcml2ZXIiCmVuZGNob2ljZQplbmRpZgo=" | base64 -d > kernel/drivers/gpu/arm/Kconfig
-        echo "Kconfig fixed"
 
     - name: Apply KernelSU patch
       run: |
@@ -36,56 +30,26 @@ jobs:
     - name: Configure kernel
       run: |
         cd kernel
-        export ARCH=arm64
-        export CROSS_COMPILE=aarch64-linux-gnu-
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- universal3830_defconfig
         scripts/config --enable CONFIG_KSU
         scripts/config --enable CONFIG_OVERLAY_FS
         scripts/config --disable CONFIG_LOCALVERSION_AUTO
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
-        grep "CONFIG_KSU" .config || echo "KSU config check done"
 
     - name: Build kernel
       run: |
         cd kernel
-        make ARCH=arm64 \
-          CROSS_COMPILE=aarch64-linux-gnu- \
-          CC=aarch64-linux-gnu-gcc \
-          -j$(nproc) Image 2>&1 | tail -200
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=aarch64-linux-gnu-gcc -j$(nproc) Image 2>&1 | tail -200
         ls -lh arch/arm64/boot/Image
 
     - name: Clone AnyKernel3
-      run: |
-        git clone --depth=1 https://github.com/osm0sis/AnyKernel3 anykernel
+      run: git clone --depth=1 https://github.com/osm0sis/AnyKernel3 anykernel
 
     - name: Package kernel
       run: |
         cp kernel/arch/arm64/boot/Image anykernel/
-        python3 -c "
-content = '''kernel.string=SM-M127F KernelSU Kernel
-do.devicecheck=1
-do.modules=0
-do.systemless=1
-do.cleanup=1
-do.cleanuponabort=0
-device.name1=m12
-device.name2=m12nacho
-device.name3=SM-M127F
-supported.versions=11
-
-. tools/ak3-core.sh
-
-dump_boot;
-patch_cmdline \"androidboot.selinux\" \"androidboot.selinux=permissive\";
-patch_cmdline \"selinux\" \"selinux=0\";
-patch_cmdline \"enforcing\" \"enforcing=0\";
-patch_cmdline \"zram.num_devices\" \"zram.num_devices=1\";
-write_boot;
-'''
-open('anykernel/anykernel.sh', 'w').write(content)
-"
-        cd anykernel
-        zip -r9 ../SM-M127F_KernelSU.zip . -x "*.git*" "*.github*" "*.md"
+        echo "a2VybmVsLnN0cmluZz1TTS1NMTI3RiBLZXJuZWxTVSBLZXJuZWwKZG8uZGV2aWNlY2hlY2s9MQpkby5tb2R1bGVzPTAKZG8uc3lzdGVtbGVzcz0xCmRvLmNsZWFudXA9MQpkby5jbGVhbnVwb25hYm9ydD0wCmRldmljZS5uYW1lMT1tMTIKZGV2aWNlLm5hbWUyPW0xMm5hY2hvCmRldmljZS5uYW1lMz1TTS1NMTI3RgpzdXBwb3J0ZWQudmVyc2lvbnM9MTEKCi4gdG9vbHMvYWszLWNvcmUuc2gKCmR1bXBfYm9vdDsKcGF0Y2hfY21kbGluZSAiYW5kcm9pZGJvb3Quc2VsaW51eCIgImFuZHJvaWRib290LnNlbGludXg9cGVybWlzc2l2ZSI7CnBhdGNoX2NtZGxpbmUgInNlbGludXgiICJzZWxpbnV4PTAiOwpwYXRjaF9jbWRsaW5lICJlbmZvcmNpbmciICJlbmZvcmNpbmc9MCI7CnBhdGNoX2NtZGxpbmUgInpyYW0ubnVtX2RldmljZXMiICJ6cmFtLm51bV9kZXZpY2VzPTEiOwp3cml0ZV9ib290Owo=" | base64 -d > anykernel/anykernel.sh
+        cd anykernel && zip -r9 ../SM-M127F_KernelSU.zip . -x "*.git*" "*.github*" "*.md"
         ls -lh ../SM-M127F_KernelSU.zip
 
     - name: Upload artifact
