@@ -23,22 +23,21 @@ jobs:
           https://github.com/maazm7d/kernel_samsung_m12 \
           kernel
         cd kernel
-        echo "Branch: $(git branch --show-current)"
         echo "Commit: $(git log --oneline -1)"
+        echo "=== All defconfigs ==="
+        ls arch/arm64/configs/
 
     - name: Apply KernelSU patch
       run: |
         cd kernel
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-        echo "KernelSU version: $(cat KernelSU/version)"
 
     - name: Configure kernel
       run: |
         cd kernel
         export ARCH=arm64
         export CROSS_COMPILE=aarch64-linux-gnu-
-        echo "Using defconfig: exynos850-m12nsxx_defconfig"
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- exynos850-m12nsxx_defconfig
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- universal3830_defconfig
         scripts/config --enable CONFIG_KSU
         scripts/config --enable CONFIG_OVERLAY_FS
         scripts/config --disable CONFIG_LOCALVERSION_AUTO
@@ -52,7 +51,7 @@ jobs:
         export CROSS_COMPILE=aarch64-linux-gnu-
         make ARCH=arm64 \
           CROSS_COMPILE=aarch64-linux-gnu- \
-          -j$(nproc) Image 2>&1 | tail -100
+          -j$(nproc) Image 2>&1 | tail -150
         ls -lh arch/arm64/boot/Image
 
     - name: Clone AnyKernel3
