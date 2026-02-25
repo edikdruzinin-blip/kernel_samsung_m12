@@ -24,13 +24,21 @@ jobs:
           kernel
         cd kernel
         echo "Commit: $(git log --oneline -1)"
-        echo "=== All defconfigs ==="
-        ls arch/arm64/configs/
 
     - name: Apply KernelSU patch
       run: |
         cd kernel
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+
+    - name: Fix Mali GPU Kconfig
+      run: |
+        cd kernel
+        echo "=== drivers/gpu/arm/Kconfig lines 20-30 ==="
+        sed -n '20,30p' drivers/gpu/arm/Kconfig
+        # Фиксим синтаксис Kconfig - заменяем ---help--- на help
+        find drivers/gpu/arm -name "Kconfig" | xargs sed -i 's/---help---/help/g' 2>/dev/null || true
+        # Проверим ещё раз
+        sed -n '20,30p' drivers/gpu/arm/Kconfig
 
     - name: Configure kernel
       run: |
