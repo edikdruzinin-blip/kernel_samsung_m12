@@ -28,6 +28,17 @@ jobs:
         sed -i "s/static bool __init_or_module initcall_sec_debug/static bool initcall_sec_debug/" init/main.c
         sed -i 's/panic("fail to freeze tasks: %s", secdbg_exin_get_unfz());/panic("fail to freeze tasks");/' kernel/power/process.c
         sed -i 's/if (sb->s_magic == F2FS_SUPER_MAGIC)/if (sb->s_magic == 0xF2F52010UL)/' fs/super.c
+        # Fix BTS driver: types.h is a relative include inside cal-if
+        sed -i 's|#include "types.h"|#include "drivers/soc/samsung/cal-if/types.h"|' \
+            drivers/soc/samsung/cal-if/pwrcal-env.h 2>/dev/null || true
+        # Also add include path via Makefile patch
+        if [ -f drivers/bts/Makefile ]; then
+            sed -i '1s|^|ccflags-y += -I$(srctree)/drivers/soc/samsung/cal-if\n|' drivers/bts/Makefile
+        fi
+        # Fix sensorhub firmware: disable it if no firmware dir
+        if grep -r "shub_nacho_bl" firmware/Makefile 2>/dev/null; then
+            sed -i '/shub_nacho/d' firmware/Makefile
+        fi
         echo "ZiA9IG9wZW4oJ2luY2x1ZGUvbGludXgvbW0uaCcsICdyJykKY29udGVudCA9IGYucmVhZCgpCmYuY2xvc2UoKQpjb250ZW50ID0gY29udGVudC5yZXBsYWNlKAogICAgJ2V4dGVybiBpbmxpbmUgYm9vbCBuZWVkX21lbW9yeV9ib29zdGluZyhzdHJ1Y3QgcGdsaXN0X2RhdGEgKnBnZGF0KTsnLAogICAgJy8qIG5lZWRfbWVtb3J5X2Jvb3N0aW5nIGRlZmluZWQgaW4gbW0vdm1zY2FuLmMgKi8nCikKb3BlbignaW5jbHVkZS9saW51eC9tbS5oJywgJ3cnKS53cml0ZShjb250ZW50KQpwcmludCgnbW0uaCBwYXRjaGVkJykK" | base64 -d > /tmp/patch_mm.py && python3 /tmp/patch_mm.py
         echo "aW1wb3J0IHJlCmYgPSBvcGVuKCdrZXJuZWwvc2NoZWQvY29yZS5jJywgJ3InKQpjb250ZW50ID0gZi5yZWFkKCkKZi5jbG9zZSgpCmNvbnRlbnQgPSByZS5zdWIocidbXlxuXSpydW5fZGVsYXlfbmV4dF90YXNrW15cbl0qXG4nLCAnJywgY29udGVudCkKY29udGVudCA9IHJlLnN1YihyJ1teXG5dKmxhc3Rfc3VtX3J1bl9kZWxheVteXG5dKlxuJywgJycsIGNvbnRlbnQpCmNvbnRlbnQgPSByZS5zdWIocidbXlxuXSpcLnJ1bl9kZWxheVteXG5dKlxuJywgJycsIGNvbnRlbnQpCm9wZW4oJ2tlcm5lbC9zY2hlZC9jb3JlLmMnLCAndycpLndyaXRlKGNvbnRlbnQpCnByaW50KCdzY2hlZC9jb3JlLmMgcGF0Y2hlZCcpCg==" | base64 -d > /tmp/patch_sched.py && python3 /tmp/patch_sched.py
         echo "All patches applied"
@@ -44,6 +55,8 @@ jobs:
         scripts/config --enable CONFIG_KSU
         scripts/config --enable CONFIG_OVERLAY_FS
         scripts/config --disable CONFIG_LOCALVERSION_AUTO
+        scripts/config --set-str CONFIG_EXTRA_FIRMWARE ""
+        scripts/config --set-str CONFIG_EXTRA_FIRMWARE_DIR ""
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
 
     - name: Build kernel
