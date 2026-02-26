@@ -28,10 +28,7 @@ jobs:
         sed -i "s/static bool __init_or_module initcall_sec_debug/static bool initcall_sec_debug/" init/main.c
         sed -i 's/panic("fail to freeze tasks: %s", secdbg_exin_get_unfz());/panic("fail to freeze tasks");/' kernel/power/process.c
         sed -i 's/if (sb->s_magic == F2FS_SUPER_MAGIC)/if (sb->s_magic == 0xF2F52010UL)/' fs/super.c
-        # Fix BTS driver: types.h is a relative include inside cal-if
-        sed -i 's|#include "types.h"|#include "drivers/soc/samsung/cal-if/types.h"|' \
-            drivers/soc/samsung/cal-if/pwrcal-env.h 2>/dev/null || true
-        # Also add include path via Makefile patch
+        # Fix BTS driver: add cal-if to include path so relative "types.h" is found
         if [ -f drivers/bts/Makefile ]; then
             sed -i '1s|^|ccflags-y += -I$(srctree)/drivers/soc/samsung/cal-if\n|' drivers/bts/Makefile
         fi
