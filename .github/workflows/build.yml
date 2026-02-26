@@ -25,67 +25,12 @@ jobs:
     - name: Fix Samsung build errors
       run: |
         cd kernel
-
-        # Fix 1: init/main.c - __init_or_module section conflict
         sed -i "s/static bool __init_or_module initcall_sec_debug/static bool initcall_sec_debug/" init/main.c
-
-        # Fix 2: kernel/power/process.c - macro used as function
         sed -i 's/panic("fail to freeze tasks: %s", secdbg_exin_get_unfz());/panic("fail to freeze tasks");/' kernel/power/process.c
-
-        # Fix 3: mm/include/linux/mm.h - extern inline function missing body
-        # Change extern inline declaration to static inline with dummy body
-        python3 -c "
-import re
-f = open('include/linux/mm.h', 'r')
-content = f.read()
-f.close()
-content = content.replace(
-    'extern inline bool need_memory_boosting(struct pglist_data *pgdat);',
-    'static inline bool need_memory_boosting(struct pglist_data *pgdat) { return false; }'
-)
-open('include/linux/mm.h', 'w').write(content)
-print('mm.h patched')
-"
-
-        # Fix 4: kernel/sched/core.c - Samsung sched_info fields missing
-        # Comment out the Samsung-specific run_delay tracking block
-        python3 -c "
-f = open('kernel/sched/core.c', 'r')
-lines = f.readlines()
-f.close()
-out = []
-skip = False
-for i, line in enumerate(lines):
-    if 'run_delay_next_task' in line and 'sched_info' in line:
-        skip = True
-    if skip:
-        out.append('/* SAMSUNG_PATCH_SKIP ' + line.rstrip() + ' */\n')
-        if line.strip().endswith(';') or line.strip() == '':
-            skip = False
-    else:
-        out.append(line)
-open('kernel/sched/core.c', 'w').writelines(out)
-print('sched/core.c patched')
-" || echo "sched patch skipped"
-
-        # Simpler fix for sched - just replace the whole problematic block
-        python3 -c "
-import re
-f = open('kernel/sched/core.c', 'r')
-content = f.read()
-f.close()
-# Remove lines referencing Samsung-specific sched_info fields
-content = re.sub(r'[^\n]*run_delay_next_task[^\n]*\n', '', content)
-content = re.sub(r'[^\n]*last_sum_run_delay[^\n]*\n', '', content)
-content = re.sub(r'[^\n]*run_delay[^\n]*sched_info[^\n]*\n', '', content)
-open('kernel/sched/core.c', 'w').write(content)
-print('sched/core.c patched (regex)')
-"
-
-        # Fix 5: fs/super.c - F2FS_SUPER_MAGIC undeclared
         sed -i 's/if (sb->s_magic == F2FS_SUPER_MAGIC)/if (sb->s_magic == 0xF2F52010UL)/' fs/super.c
-
-        echo "All Samsung patches applied"
+        echo "ZiA9IG9wZW4oJ2luY2x1ZGUvbGludXgvbW0uaCcsICdyJykKY29udGVudCA9IGYucmVhZCgpCmYuY2xvc2UoKQpjb250ZW50ID0gY29udGVudC5yZXBsYWNlKAogICAgJ2V4dGVybiBpbmxpbmUgYm9vbCBuZWVkX21lbW9yeV9ib29zdGluZyhzdHJ1Y3QgcGdsaXN0X2RhdGEgKnBnZGF0KTsnLAogICAgJ3N0YXRpYyBpbmxpbmUgYm9vbCBuZWVkX21lbW9yeV9ib29zdGluZyhzdHJ1Y3QgcGdsaXN0X2RhdGEgKnBnZGF0KSB7IHJldHVybiBmYWxzZTsgfScKKQpvcGVuKCdpbmNsdWRlL2xpbnV4L21tLmgnLCAndycpLndyaXRlKGNvbnRlbnQpCnByaW50KCdtbS5oIHBhdGNoZWQnKQo=" | base64 -d > /tmp/patch_mm.py && python3 /tmp/patch_mm.py
+        echo "aW1wb3J0IHJlCmYgPSBvcGVuKCdrZXJuZWwvc2NoZWQvY29yZS5jJywgJ3InKQpjb250ZW50ID0gZi5yZWFkKCkKZi5jbG9zZSgpCmNvbnRlbnQgPSByZS5zdWIocidbXlxuXSpydW5fZGVsYXlfbmV4dF90YXNrW15cbl0qXG4nLCAnJywgY29udGVudCkKY29udGVudCA9IHJlLnN1YihyJ1teXG5dKmxhc3Rfc3VtX3J1bl9kZWxheVteXG5dKlxuJywgJycsIGNvbnRlbnQpCmNvbnRlbnQgPSByZS5zdWIocidbXlxuXSpcLnJ1bl9kZWxheVteXG5dKlxuJywgJycsIGNvbnRlbnQpCm9wZW4oJ2tlcm5lbC9zY2hlZC9jb3JlLmMnLCAndycpLndyaXRlKGNvbnRlbnQpCnByaW50KCdzY2hlZC9jb3JlLmMgcGF0Y2hlZCcpCg==" | base64 -d > /tmp/patch_sched.py && python3 /tmp/patch_sched.py
+        echo "All patches applied"
 
     - name: Apply KernelSU patch
       run: |
@@ -104,11 +49,7 @@ print('sched/core.c patched (regex)')
     - name: Build kernel
       run: |
         cd kernel
-        make ARCH=arm64 \
-          CROSS_COMPILE=aarch64-linux-gnu- \
-          CC=aarch64-linux-gnu-gcc \
-          KCFLAGS="-w" \
-          -j$(nproc) Image 2>&1 | tail -200
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=aarch64-linux-gnu-gcc KCFLAGS="-w" -j$(nproc) Image 2>&1 | tail -200
         ls -lh arch/arm64/boot/Image
 
     - name: Clone AnyKernel3
