@@ -49,7 +49,10 @@ jobs:
     - name: Build kernel
       run: |
         cd kernel
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=aarch64-linux-gnu-gcc KCFLAGS="-w" -j$(nproc) Image 2>&1 | tail -200
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=aarch64-linux-gnu-gcc KCFLAGS="-w" -j$(nproc) Image 2>&1 | tee /tmp/build.log; true
+        echo "=== ERRORS ==="
+        grep -E "^.*(error:|Error [0-9]|undefined reference)" /tmp/build.log | head -50 || true
+        echo "=== END ERRORS ==="
         ls -lh arch/arm64/boot/Image
 
     - name: Clone AnyKernel3
