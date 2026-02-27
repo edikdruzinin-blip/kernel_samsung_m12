@@ -52,8 +52,19 @@ jobs:
       run: |
         cd kernel
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- universal3830_defconfig
-        # Convert ALL modules (=m) to built-in (=y) so Image contains all drivers
-        sed -i 's/=m$/=y/g' .config
+        # Disable module support - forces ALL =m drivers to become =y (built into Image)
+        scripts/config --disable CONFIG_MODULES
+        # Explicitly enable key Exynos 850 SoC drivers
+        scripts/config --enable CONFIG_MMC_DW
+        scripts/config --enable CONFIG_MMC_DW_EXYNOS
+        scripts/config --enable CONFIG_EXYNOS_THERMAL
+        scripts/config --enable CONFIG_PINCTRL_EXYNOS
+        scripts/config --enable CONFIG_FB
+        scripts/config --enable CONFIG_I2C
+        scripts/config --enable CONFIG_SPI
+        scripts/config --enable CONFIG_REGULATOR
+        scripts/config --enable CONFIG_MFD_SYSCON
+        scripts/config --enable CONFIG_DRM_EXYNOS
         scripts/config --enable CONFIG_KSU
         scripts/config --enable CONFIG_OVERLAY_FS
         scripts/config --disable CONFIG_LOCALVERSION_AUTO
@@ -63,6 +74,7 @@ jobs:
         scripts/config --disable CONFIG_SENSORS_SSP
         scripts/config --disable CONFIG_SHUB
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+        echo "=== Config stats: $(grep -c '=y' .config) built-in, $(grep -c '=m' .config 2>/dev/null || echo 0) modules ==="
 
     - name: Build kernel
       run: |
