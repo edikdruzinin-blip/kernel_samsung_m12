@@ -41,6 +41,10 @@ jobs:
         # Remove the wrong entry from root Makefile if it exists
         sed -i '/samsung_stubs/d' Makefile 2>/dev/null || true
         echo "Stubs created in init/"
+        # Fix KernelSU TWA_RESUME: this enum was added in kernel 5.7; Samsung kernel is 4.19
+        # TWA_RESUME=2 is equivalent to TWA_NOTIFY in 4.19
+        find KernelSU/kernel -name "allowlist.c" -o -name "*.c" 2>/dev/null |           xargs grep -l "TWA_RESUME" 2>/dev/null |           xargs sed -i 's/TWA_RESUME/TWA_NOTIFY/g' 2>/dev/null || true
+        find drivers/kernelsu -name "*.c" 2>/dev/null |           xargs grep -l "TWA_RESUME" 2>/dev/null |           xargs sed -i 's/TWA_RESUME/TWA_NOTIFY/g' 2>/dev/null || true
         echo "Stubs created"
 
         # Fix battery wakeup_source API (base64-encoded to avoid YAML << conflict)
@@ -67,6 +71,11 @@ jobs:
         scripts/config --disable CONFIG_SENSORS_SSP
         scripts/config --disable CONFIG_SHUB
         # Resolve any dependency changes
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+        # Fix: ensure EXTRA_FIRMWARE is empty (physwizz config points to real paths)
+        scripts/config --set-str CONFIG_EXTRA_FIRMWARE ""
+        scripts/config --set-str CONFIG_EXTRA_FIRMWARE_DIR ""
+        # Re-run to apply the firmware config changes
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
         # Verify
         echo "=== Config stats: $(grep -c '=y' .config) built-in, $(grep -c '=m' .config 2>/dev/null || echo 0) modules ==="
