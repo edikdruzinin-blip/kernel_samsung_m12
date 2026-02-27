@@ -52,19 +52,56 @@ jobs:
       run: |
         cd kernel
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- universal3830_defconfig
-        # Disable module support - forces ALL =m drivers to become =y (built into Image)
+        # Step 1: Disable module support so olddefconfig converts =m -> =y
         scripts/config --disable CONFIG_MODULES
-        # Explicitly enable key Exynos 850 SoC drivers
+
+        # Step 2: Enable MMC/eMMC dependency chain (required for Android to boot)
+        scripts/config --enable CONFIG_MMC
+        scripts/config --enable CONFIG_MMC_BLOCK
         scripts/config --enable CONFIG_MMC_DW
         scripts/config --enable CONFIG_MMC_DW_EXYNOS
-        scripts/config --enable CONFIG_EXYNOS_THERMAL
-        scripts/config --enable CONFIG_PINCTRL_EXYNOS
+        scripts/config --enable CONFIG_MMC_DW_PLTFM
+
+        # Step 3: Enable Mali GPU (Bifrost r26p0) - Samsung custom driver
+        # The driver is in drivers/gpu/arm/b_r26p0/
+        scripts/config --enable CONFIG_MALI_DDK_VERSION
+        scripts/config --enable CONFIG_MALI_BIFROST_R26P0
+        # Also try mainline Mali names
+        scripts/config --enable CONFIG_MALI_MIDGARD || true
+        scripts/config --enable CONFIG_MALI_PLATFORM_EXYNOS || true
+
+        # Step 4: Enable Samsung Exynos display (DECON/DPU)
+        scripts/config --enable CONFIG_EXYNOS_DPU || true
+        scripts/config --enable CONFIG_DPU_20 || true
+        scripts/config --enable CONFIG_EXYNOS_DSIM || true
         scripts/config --enable CONFIG_FB
+        scripts/config --enable CONFIG_FB_ARMCLCD || true
+
+        # Step 5: Enable SoC/Platform drivers
         scripts/config --enable CONFIG_I2C
+        scripts/config --enable CONFIG_I2C_EXYNOS5 || true
         scripts/config --enable CONFIG_SPI
+        scripts/config --enable CONFIG_SPI_EXYNOS || true
         scripts/config --enable CONFIG_REGULATOR
+        scripts/config --enable CONFIG_REGULATOR_S2MPU09 || true
+        scripts/config --enable CONFIG_PINCTRL_EXYNOS
+        scripts/config --enable CONFIG_EXYNOS_THERMAL
         scripts/config --enable CONFIG_MFD_SYSCON
-        scripts/config --enable CONFIG_DRM_EXYNOS
+
+        # Step 6: Enable WiFi (usually Broadcom for Samsung)
+        scripts/config --enable CONFIG_WLAN || true
+        scripts/config --enable CONFIG_CFG80211 || true
+        scripts/config --enable CONFIG_BCMDHD || true
+
+        # Step 7: Enable USB/Charging
+        scripts/config --enable CONFIG_USB_DWC3 || true
+        scripts/config --enable CONFIG_USB_DWC3_EXYNOS || true
+
+        # Step 8: Enable block/crypto needed for Android
+        scripts/config --enable CONFIG_DM_VERITY || true
+        scripts/config --enable CONFIG_DM_ANDROID_VERITY || true
+
+        # Step 9: KernelSU + Android requirements
         scripts/config --enable CONFIG_KSU
         scripts/config --enable CONFIG_OVERLAY_FS
         scripts/config --disable CONFIG_LOCALVERSION_AUTO
@@ -73,8 +110,24 @@ jobs:
         scripts/config --disable CONFIG_EXYNOS_BTS
         scripts/config --disable CONFIG_SENSORS_SSP
         scripts/config --disable CONFIG_SHUB
+
+        # Step 10: Run olddefconfig to resolve all dependencies
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+
+        # Verify critical drivers are enabled
         echo "=== Config stats: $(grep -c '=y' .config) built-in, $(grep -c '=m' .config 2>/dev/null || echo 0) modules ==="
+        echo "=== Critical drivers ==="
+        grep -E "^CONFIG_(MMC|MMC_DW|MALI|DPU|EXYNOS_DPU|FB|WLAN|BCMDHD)=" .config | head -20 || echo "Some not found"
+
+    - name: Dump config for debug
+      run: |
+        cd kernel
+        echo "=== MMC configs ==="
+        grep -E "MMC" .config | grep -v "^#" || echo "none"
+        echo "=== MALI/GPU configs ==="
+        grep -E "MALI|DPU|DECON|DSIM" .config | grep -v "^#" || echo "none"
+        echo "=== WIFI configs ==="
+        grep -E "BCMDHD|WLAN|CFG80211" .config | grep -v "^#" || echo "none"
 
     - name: Build kernel
       run: |
