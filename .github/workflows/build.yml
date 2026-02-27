@@ -43,14 +43,44 @@ jobs:
         echo "Stubs created in init/"
         echo "Stubs created"
 
-        # Fix battery wakeup_source_init: __always_inline body not available
-        # Replace __always_inline with static inline in sec_charging_common.h
-        sed -i 's/__always_inline/static inline/g' drivers/battery/common/sec_charging_common.h 2>/dev/null || true
-        # Also fix wakeup_source_init -> wakeup_source_register (API changed in kernel 5.x)
-        find drivers/battery -name "*.h" -o -name "*.c" | xargs sed -i \
-          's/wakeup_source_init(\([^,]*\),\s*\([^)]*\))/wakeup_source_register(NULL, \2)/g' 2>/dev/null || true
-        find drivers/battery -name "*.h" -o -name "*.c" | xargs sed -i \
-          's/wakeup_source_trash(/wakeup_source_unregister(/g' 2>/dev/null || true
+        # Fix battery wakeup_source API - use Python for safe patching
+        python3 - << 'PYEOF'
+import re, os
+
+fname = 'drivers/battery/common/sec_charging_common.h'
+if not os.path.exists(fname):
+    print(f"{fname} not found, skipping")
+    exit(0)
+
+with open(fname, 'r') as f:
+    text = f.read()
+
+original = text
+
+# 1. Change __always_inline to static inline for battery wakeup functions
+#    (avoid "function body not available" linker error)
+text = text.replace('__always_inline void battery_wakeup_source_init',
+                    'static inline void battery_wakeup_source_init')
+text = text.replace('__always_inline void battery_wakeup_source_trash',
+                    'static inline void battery_wakeup_source_trash')
+
+# 2. wakeup_source_init was removed in kernel 5.x, replaced by wakeup_source_register
+#    Replace: wakeup_source_init(*ws, name)  ->  *ws = wakeup_source_register(NULL, name)
+text = re.sub(
+    r'wakeup_source_init\((\*\w+)\s*,\s*([^)]+)\)',
+    r'\1 = wakeup_source_register(NULL, \2)',
+    text
+)
+# 3. wakeup_source_trash -> wakeup_source_unregister
+text = text.replace('wakeup_source_trash(', 'wakeup_source_unregister(')
+
+if text != original:
+    with open(fname, 'w') as f:
+        f.write(text)
+    print("sec_charging_common.h patched successfully")
+else:
+    print("sec_charging_common.h - no changes needed")
+PYEOF
 
     - name: Apply KernelSU patch
       run: |
