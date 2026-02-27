@@ -43,6 +43,15 @@ jobs:
         echo "Stubs created in init/"
         echo "Stubs created"
 
+        # Fix battery wakeup_source_init: __always_inline body not available
+        # Replace __always_inline with static inline in sec_charging_common.h
+        sed -i 's/__always_inline/static inline/g' drivers/battery/common/sec_charging_common.h 2>/dev/null || true
+        # Also fix wakeup_source_init -> wakeup_source_register (API changed in kernel 5.x)
+        find drivers/battery -name "*.h" -o -name "*.c" | xargs sed -i \
+          's/wakeup_source_init(\([^,]*\),\s*\([^)]*\))/wakeup_source_register(NULL, \2)/g' 2>/dev/null || true
+        find drivers/battery -name "*.h" -o -name "*.c" | xargs sed -i \
+          's/wakeup_source_trash(/wakeup_source_unregister(/g' 2>/dev/null || true
+
     - name: Apply KernelSU patch
       run: |
         cd kernel
