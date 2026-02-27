@@ -43,44 +43,8 @@ jobs:
         echo "Stubs created in init/"
         echo "Stubs created"
 
-        # Fix battery wakeup_source API - use Python for safe patching
-        python3 - << 'PYEOF'
-import re, os
-
-fname = 'drivers/battery/common/sec_charging_common.h'
-if not os.path.exists(fname):
-    print(f"{fname} not found, skipping")
-    exit(0)
-
-with open(fname, 'r') as f:
-    text = f.read()
-
-original = text
-
-# 1. Change __always_inline to static inline for battery wakeup functions
-#    (avoid "function body not available" linker error)
-text = text.replace('__always_inline void battery_wakeup_source_init',
-                    'static inline void battery_wakeup_source_init')
-text = text.replace('__always_inline void battery_wakeup_source_trash',
-                    'static inline void battery_wakeup_source_trash')
-
-# 2. wakeup_source_init was removed in kernel 5.x, replaced by wakeup_source_register
-#    Replace: wakeup_source_init(*ws, name)  ->  *ws = wakeup_source_register(NULL, name)
-text = re.sub(
-    r'wakeup_source_init\((\*\w+)\s*,\s*([^)]+)\)',
-    r'\1 = wakeup_source_register(NULL, \2)',
-    text
-)
-# 3. wakeup_source_trash -> wakeup_source_unregister
-text = text.replace('wakeup_source_trash(', 'wakeup_source_unregister(')
-
-if text != original:
-    with open(fname, 'w') as f:
-        f.write(text)
-    print("sec_charging_common.h patched successfully")
-else:
-    print("sec_charging_common.h - no changes needed")
-PYEOF
+        # Fix battery wakeup_source API (base64-encoded to avoid YAML << conflict)
+        echo "aW1wb3J0IHJlLCBvcwoKZm5hbWUgPSAnZHJpdmVycy9iYXR0ZXJ5L2NvbW1vbi9zZWNfY2hhcmdpbmdfY29tbW9uLmgnCmlmIG5vdCBvcy5wYXRoLmV4aXN0cyhmbmFtZSk6CiAgICBwcmludChmIntmbmFtZX0gbm90IGZvdW5kLCBza2lwcGluZyIpCiAgICBleGl0KDApCgp3aXRoIG9wZW4oZm5hbWUsICdyJykgYXMgZjoKICAgIHRleHQgPSBmLnJlYWQoKQoKb3JpZ2luYWwgPSB0ZXh0Cgp0ZXh0ID0gdGV4dC5yZXBsYWNlKCdfX2Fsd2F5c19pbmxpbmUgdm9pZCBiYXR0ZXJ5X3dha2V1cF9zb3VyY2VfaW5pdCcsCiAgICAgICAgICAgICAgICAgICAgJ3N0YXRpYyBpbmxpbmUgdm9pZCBiYXR0ZXJ5X3dha2V1cF9zb3VyY2VfaW5pdCcpCnRleHQgPSB0ZXh0LnJlcGxhY2UoJ19fYWx3YXlzX2lubGluZSB2b2lkIGJhdHRlcnlfd2FrZXVwX3NvdXJjZV90cmFzaCcsCiAgICAgICAgICAgICAgICAgICAgJ3N0YXRpYyBpbmxpbmUgdm9pZCBiYXR0ZXJ5X3dha2V1cF9zb3VyY2VfdHJhc2gnKQoKdGV4dCA9IHJlLnN1YigKICAgIHInd2FrZXVwX3NvdXJjZV9pbml0XCgoXCpcdyspXHMqLFxzKihbXildKylcKScsCiAgICByJ1wxID0gd2FrZXVwX3NvdXJjZV9yZWdpc3RlcihOVUxMLCBcMiknLAogICAgdGV4dAopCnRleHQgPSB0ZXh0LnJlcGxhY2UoJ3dha2V1cF9zb3VyY2VfdHJhc2goJywgJ3dha2V1cF9zb3VyY2VfdW5yZWdpc3RlcignKQoKaWYgdGV4dCAhPSBvcmlnaW5hbDoKICAgIHdpdGggb3BlbihmbmFtZSwgJ3cnKSBhcyBmOgogICAgICAgIGYud3JpdGUodGV4dCkKICAgIHByaW50KCJzZWNfY2hhcmdpbmdfY29tbW9uLmggcGF0Y2hlZCIpCmVsc2U6CiAgICBwcmludCgic2VjX2NoYXJnaW5nX2NvbW1vbi5oIC0gbm8gY2hhbmdlcyBuZWVkZWQiKQo=" | base64 -d > /tmp/patch_battery.py && python3 /tmp/patch_battery.py
 
     - name: Apply KernelSU patch
       run: |
