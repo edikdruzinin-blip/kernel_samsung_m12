@@ -52,6 +52,8 @@ jobs:
       run: |
         cd kernel
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- universal3830_defconfig
+        # Convert ALL modules (=m) to built-in (=y) so Image contains all drivers
+        sed -i 's/=m$/=y/g' .config
         scripts/config --enable CONFIG_KSU
         scripts/config --enable CONFIG_OVERLAY_FS
         scripts/config --disable CONFIG_LOCALVERSION_AUTO
