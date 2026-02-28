@@ -64,25 +64,22 @@ jobs:
       run: |
         cd kernel
         # task_work_add API: kernel 4.19 uses bool notify, not enum TWA_*
-        # kernel 5.10+ uses enum (TWA_RESUME, TWA_NOTIFY, TWA_SIGNAL)
-        # Replace all TWA_* variants with 'true' for kernel 4.19 compat
         for f in $(find KernelSU/ drivers/kernelsu/ -name "*.c" -o -name "*.h" 2>/dev/null); do
           if [ -f "$f" ]; then
             sed -i 's/TWA_RESUME/true/g; s/TWA_NOTIFY/true/g; s/TWA_SIGNAL/true/g' "$f"
           fi
         done
-        echo "KernelSU compat: replaced TWA_* with true for kernel 4.19"
-        # app_profile.c uses seccomp.filter_count which was added in kernel 5.x
-        # In kernel 4.19 struct seccomp has no filter_count field
-        # The check is used to detect if seccomp is active - use filter != NULL instead
+        echo "KernelSU compat: replaced TWA_* with true"
+        # seccomp.filter_count added in kernel 5.x; not in 4.19
+        # Replace atomic_read(&X->seccomp.filter_count) with 0 (assume seccomp inactive)
         for f in $(find KernelSU/ drivers/kernelsu/ -name "app_profile.c" 2>/dev/null); do
           if [ -f "$f" ]; then
+            sed -i 's/atomic_read(&[a-zA-Z_0-9]*->seccomp\.filter_count)/0/g' "$f"
+            sed -i 's/atomic_read(&[a-zA-Z_0-9]*\.seccomp\.filter_count)/0/g' "$f"
             sed -i 's/->seccomp\.filter_count/->seccomp.filter != NULL ? 1 : 0/g' "$f"
-            sed -i 's/\.seccomp\.filter_count/.seccomp.filter != NULL ? 1 : 0/g' "$f"
             echo "Patched seccomp.filter_count in $f"
           fi
         done
-
     - name: Configure kernel (using physwizz base config)
       run: |
         cd kernel
