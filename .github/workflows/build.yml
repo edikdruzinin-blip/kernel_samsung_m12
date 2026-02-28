@@ -72,6 +72,16 @@ jobs:
           fi
         done
         echo "KernelSU compat: replaced TWA_* with true for kernel 4.19"
+        # app_profile.c uses seccomp.filter_count which was added in kernel 5.x
+        # In kernel 4.19 struct seccomp has no filter_count field
+        # The check is used to detect if seccomp is active - use filter != NULL instead
+        for f in $(find KernelSU/ drivers/kernelsu/ -name "app_profile.c" 2>/dev/null); do
+          if [ -f "$f" ]; then
+            sed -i 's/->seccomp\.filter_count/->seccomp.filter != NULL ? 1 : 0/g' "$f"
+            sed -i 's/\.seccomp\.filter_count/.seccomp.filter != NULL ? 1 : 0/g' "$f"
+            echo "Patched seccomp.filter_count in $f"
+          fi
+        done
 
     - name: Configure kernel (using physwizz base config)
       run: |
