@@ -41,6 +41,11 @@ jobs:
         # Remove the wrong entry from root Makefile if it exists
         sed -i '/samsung_stubs/d' Makefile 2>/dev/null || true
         echo "Stubs created in init/"
+        # Fix firmware: comment out all obj-y lines in firmware/Makefile to avoid missing files
+        # The actual TSP firmware is not present in the kernel source repo
+        sed -i 's/^obj-y/#obj-y/' firmware/Makefile 2>/dev/null || true
+        sed -i 's/^subdir-y/#subdir-y/' firmware/Makefile 2>/dev/null || true
+        echo "Firmware Makefile disabled"
         # Fix KernelSU TWA_RESUME: this enum was added in kernel 5.7; Samsung kernel is 4.19
         # TWA_RESUME=2 is equivalent to TWA_NOTIFY in 4.19
         find KernelSU/kernel -name "allowlist.c" -o -name "*.c" 2>/dev/null |           xargs grep -l "TWA_RESUME" 2>/dev/null |           xargs sed -i 's/TWA_RESUME/TWA_NOTIFY/g' 2>/dev/null || true
@@ -54,6 +59,13 @@ jobs:
       run: |
         cd kernel
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+
+    - name: Fix KernelSU compatibility
+      run: |
+        cd kernel
+        # TWA_RESUME was added in kernel 5.7; Samsung kernel is 4.19 which has only TWA_NOTIFY
+        find drivers/kernelsu -name "*.c" | xargs grep -l "TWA_RESUME" |           xargs sed -i 's/TWA_RESUME/TWA_NOTIFY/g' 2>/dev/null || true
+        echo "KernelSU compat fixes applied"
 
     - name: Configure kernel (using physwizz base config)
       run: |
