@@ -63,23 +63,23 @@ jobs:
     - name: Fix KernelSU compatibility
       run: |
         cd kernel
-        # task_work_add API: kernel 4.19 uses bool notify, not enum TWA_*
+        # task_work_add: kernel 4.19 uses bool, not enum TWA_*
         for f in $(find KernelSU/ drivers/kernelsu/ -name "*.c" -o -name "*.h" 2>/dev/null); do
           if [ -f "$f" ]; then
             sed -i 's/TWA_RESUME/true/g; s/TWA_NOTIFY/true/g; s/TWA_SIGNAL/true/g' "$f"
           fi
         done
-        echo "KernelSU compat: replaced TWA_* with true"
-        # seccomp.filter_count added in kernel 5.x; not in 4.19
-        # Replace atomic_read(&X->seccomp.filter_count) with 0 (assume seccomp inactive)
+        # seccomp.filter_count not in kernel 4.19
+        # atomic_read(&x->seccomp.filter_count) -> 0 (no seccomp)
+        # atomic_set(&x->seccomp.filter_count, 0) -> (void)0 (no-op)
         for f in $(find KernelSU/ drivers/kernelsu/ -name "app_profile.c" 2>/dev/null); do
           if [ -f "$f" ]; then
-            sed -i 's/atomic_read(&[a-zA-Z_0-9]*->seccomp\.filter_count)/0/g' "$f"
-            sed -i 's/atomic_read(&[a-zA-Z_0-9]*\.seccomp\.filter_count)/0/g' "$f"
-            sed -i 's/->seccomp\.filter_count/->seccomp.filter != NULL ? 1 : 0/g' "$f"
-            echo "Patched seccomp.filter_count in $f"
+            sed -i 's/atomic_read([^)]*filter_count[^)]*)/0/g' "$f"
+            sed -i 's/atomic_set([^)]*filter_count[^)]*,[ ]*[0-9]*)/(void)0/g' "$f"
+            echo "Patched $f"
           fi
         done
+        echo "KernelSU compat fixes done"
     - name: Configure kernel (using physwizz base config)
       run: |
         cd kernel
