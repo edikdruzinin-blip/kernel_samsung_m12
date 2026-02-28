@@ -74,10 +74,7 @@ jobs:
           echo "WARNING: TWA_RESUME still found, injecting compat define"
           # Insert compat define at top of offending files
           for f in $(grep -rl "TWA_RESUME" KernelSU/ drivers/kernelsu/ 2>/dev/null); do
-            sed -i '1s/^/#ifndef TWA_RESUME
-#define TWA_RESUME TWA_NOTIFY
-#endif
-/' "$f"
+            sed -i '1s|^|#ifndef TWA_RESUME\n#define TWA_RESUME TWA_NOTIFY\n#endif\n|' "$f"
           done
         else
           echo "TWA_RESUME patched successfully"
