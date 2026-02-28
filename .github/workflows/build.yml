@@ -63,9 +63,25 @@ jobs:
     - name: Fix KernelSU compatibility
       run: |
         cd kernel
-        # TWA_RESUME was added in kernel 5.7; Samsung kernel is 4.19 which has only TWA_NOTIFY
-        find drivers/kernelsu -name "*.c" | xargs grep -l "TWA_RESUME" |           xargs sed -i 's/TWA_RESUME/TWA_NOTIFY/g' 2>/dev/null || true
-        echo "KernelSU compat fixes applied"
+        # TWA_RESUME was added in kernel 5.7; Samsung kernel 4.19 only has TWA_NOTIFY
+        # KernelSU/kernel/ is the source (drivers/kernelsu is a symlink to it)
+        # Patch the actual source files directly
+        grep -rl "TWA_RESUME" KernelSU/ 2>/dev/null | xargs sed -i 's/TWA_RESUME/TWA_NOTIFY/g' || true
+        # Also patch via the symlink in case it's a copy
+        grep -rl "TWA_RESUME" drivers/kernelsu/ 2>/dev/null | xargs sed -i 's/TWA_RESUME/TWA_NOTIFY/g' || true
+        # Verify
+        if grep -r "TWA_RESUME" KernelSU/ drivers/kernelsu/ 2>/dev/null; then
+          echo "WARNING: TWA_RESUME still found, injecting compat define"
+          # Insert compat define at top of offending files
+          for f in $(grep -rl "TWA_RESUME" KernelSU/ drivers/kernelsu/ 2>/dev/null); do
+            sed -i '1s/^/#ifndef TWA_RESUME
+#define TWA_RESUME TWA_NOTIFY
+#endif
+/' "$f"
+          done
+        else
+          echo "TWA_RESUME patched successfully"
+        fi
 
     - name: Configure kernel (using physwizz base config)
       run: |
