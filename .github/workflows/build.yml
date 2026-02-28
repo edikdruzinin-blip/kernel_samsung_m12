@@ -70,8 +70,6 @@ jobs:
           fi
         done
         # seccomp.filter_count not in kernel 4.19
-        # atomic_read(&x->seccomp.filter_count) -> 0 (no seccomp)
-        # atomic_set(&x->seccomp.filter_count, 0) -> (void)0 (no-op)
         for f in $(find KernelSU/ drivers/kernelsu/ -name "app_profile.c" 2>/dev/null); do
           if [ -f "$f" ]; then
             sed -i 's/atomic_read([^)]*filter_count[^)]*)/0/g' "$f"
@@ -79,6 +77,11 @@ jobs:
             echo "Patched $f"
           fi
         done
+        # linux/pgtable.h added in kernel 5.8; create compat shim for 4.19
+        if [ ! -f include/linux/pgtable.h ]; then
+          printf '#ifndef _LINUX_PGTABLE_H\n#define _LINUX_PGTABLE_H\n#include <asm/pgtable.h>\n#endif\n' > include/linux/pgtable.h
+          echo "Created pgtable.h shim"
+        fi
         echo "KernelSU compat fixes done"
     - name: Configure kernel (using physwizz base config)
       run: |
@@ -93,8 +96,6 @@ jobs:
         scripts/config --set-str CONFIG_EXTRA_FIRMWARE ""
         scripts/config --set-str CONFIG_EXTRA_FIRMWARE_DIR ""
         scripts/config --disable CONFIG_EXYNOS_BTS
-        scripts/config --disable CONFIG_SENSORS_SSP
-        scripts/config --disable CONFIG_SHUB
         # Resolve any dependency changes
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
         # Fix: ensure EXTRA_FIRMWARE is empty (physwizz config points to real paths)
