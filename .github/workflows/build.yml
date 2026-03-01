@@ -113,6 +113,12 @@ jobs:
             echo "Removed selinux directory"
         fi
 
+        # Remove selinux includes and comment out selinux function calls
+        find drivers/kernelsu/ -name "*.c" -exec sed -i '/#include.*selinux\/.*\.h/d' {} \;
+        find drivers/kernelsu/ -name "*.h" -exec sed -i '/#include.*selinux\/.*\.h/d' {} \;
+        # Comment out lines that call selinux functions
+        find drivers/kernelsu/ -name "*.c" -exec sed -i 's/\(.*selinux_.*\)/\/\/ \1/g' {} \;
+
         # Диагностика: выводим содержимое Makefile и проверяем остатки
         echo "=== drivers/kernelsu/Makefile after cleanup ==="
         grep -v '^#' drivers/kernelsu/Makefile 2>/dev/null | grep -v '^$' || echo "Makefile is empty (or only comments)"
