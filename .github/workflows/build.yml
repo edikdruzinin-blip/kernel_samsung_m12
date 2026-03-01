@@ -136,6 +136,14 @@ jobs:
         # Comment out lines that call selinux functions
         find drivers/kernelsu/ -name "*.c" -exec sed -i 's/\(.*selinux_.*\)/\/\/ \1/g' {} \;
 
+
+        # --- Fix ksud.c: KERNEL_SU_DOMAIN was defined in selinux/rules.h (now removed) ---
+        # Stub it with "su" (KernelSU's actual SELinux domain) so string concatenation compiles
+        if [ -f drivers/kernelsu/ksud.c ]; then
+            echo "aW1wb3J0IHJlCmZuYW1lID0gJ2RyaXZlcnMva2VybmVsc3Uva3N1ZC5jJwpjID0gb3BlbihmbmFtZSkucmVhZCgpCnN0dWJzID0gKAogICAgIlxuI2lmbmRlZiBLRVJORUxfU1VfRE9NQUlOXG4iCiAgICAiI2RlZmluZSBLRVJORUxfU1VfRE9NQUlOIFwic3VcIlxuIgogICAgIiNlbmRpZlxuIgogICAgIiNpZm5kZWYgS1NVRF9QQVRIXG4iCiAgICAiI2RlZmluZSBLU1VEX1BBVEggXCIvZGF0YS9hZGIva3N1ZFwiXG4iCiAgICAiI2VuZGlmXG4iCiAgICAiI2lmbmRlZiBLU1VfT1ZFUkxBWV9TT1VSQ0VfUEFUSFxuIgogICAgIiNkZWZpbmUgS1NVX09WRVJMQVlfU09VUkNFX1BBVEggXCIvZGF0YS9hZGIvbW9kdWxlc1wiXG4iCiAgICAiI2VuZGlmXG5cbiIKKQpsaW5lcyA9IGMuc3BsaXRsaW5lcyhrZWVwZW5kcz1UcnVlKQpsYXN0X2luY19pZHggPSAtMQpmb3IgaSwgbGluZSBpbiBlbnVtZXJhdGUobGluZXMpOgogICAgaWYgbGluZS5zdGFydHN3aXRoKCcjaW5jbHVkZScpOgogICAgICAgIGxhc3RfaW5jX2lkeCA9IGkKaWYgbGFzdF9pbmNfaWR4ID49IDA6CiAgICBsaW5lcy5pbnNlcnQobGFzdF9pbmNfaWR4ICsgMSwgc3R1YnMpCiAgICBjID0gJycuam9pbihsaW5lcykKZWxzZToKICAgIGMgPSBzdHVicyArIGMKb3BlbihmbmFtZSwgJ3cnKS53cml0ZShjKQpwcmludCgnUGF0Y2hlZCBrc3VkLmM6IGFkZGVkIEtFUk5FTF9TVV9ET01BSU4vS1NVRF9QQVRIIHN0dWJzJykK" | base64 -d > /tmp/patch_ksud.py && python3 /tmp/patch_ksud.py
+        fi
+
+
         # --- Fix app_profile.c after selinux removal ---
         if [ -f drivers/kernelsu/app_profile.c ]; then
             sed -i 's/setup_selinux(KERNEL_SU_CONTEXT, cred);/\/\/ setup_selinux(KERNEL_SU_CONTEXT, cred);\n    return true;/g' drivers/kernelsu/app_profile.c
