@@ -59,7 +59,6 @@ jobs:
       run: |
         cd kernel
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-
     - name: Fix KernelSU compatibility
       run: |
         cd kernel
@@ -88,11 +87,19 @@ jobs:
         if [ -f drivers/kernelsu/su_mount_ns.c ]; then
             sed -i 's|<uapi/linux/mount.h>|<linux/fs.h>|' drivers/kernelsu/su_mount_ns.c
             echo "Patched su_mount_ns.c include"
-        fi                                                                                                                                        
-                # Fix seccomp_cache.c for kernel 4.19 (missing SECCOMP_ARCH_NATIVE_NR)
+        fi
+        # Fix seccomp_cache.c for kernel 4.19 (missing SECCOMP_ARCH_NATIVE_NR)
         if [ -f drivers/kernelsu/seccomp_cache.c ]; then
             sed -i '/#include <linux\/fs.h>/a #ifndef SECCOMP_ARCH_NATIVE_NR\n#define SECCOMP_ARCH_NATIVE_NR 512\n#endif\n#ifndef SECCOMP_ARCH_COMPAT_NR\n#define SECCOMP_ARCH_COMPAT_NR 0\n#endif' drivers/kernelsu/seccomp_cache.c
             echo "Patched seccomp_cache.c with missing defines"
+        fi
+        # Fix file_wrapper.c for kernel 4.19 (remove unsupported iopoll and remap_file_range)
+        if [ -f drivers/kernelsu/file_wrapper.c ]; then
+            sed -i '/\.iopoll =/d' drivers/kernelsu/file_wrapper.c
+            sed -i '/ksu_wrapper_iopoll/d' drivers/kernelsu/file_wrapper.c
+            sed -i '/\.remap_file_range =/d' drivers/kernelsu/file_wrapper.c
+            sed -i '/ksu_wrapper_remap_file_range/d' drivers/kernelsu/file_wrapper.c
+            echo "Patched file_wrapper.c: removed unsupported ops"
         fi
         echo "KernelSU compat fixes done"
 
