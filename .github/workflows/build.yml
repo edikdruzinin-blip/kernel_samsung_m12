@@ -96,23 +96,24 @@ jobs:
         fi
 
         # --- Полное удаление file_wrapper ---
-        # Удаляем сам файл и заголовок
         rm -f drivers/kernelsu/file_wrapper.c drivers/kernelsu/file_wrapper.h
-
-        # Удаляем все строки, содержащие file_wrapper, из Makefile и Kbuild
         sed -i '/file_wrapper/d' drivers/kernelsu/Makefile 2>/dev/null || true
         sed -i '/file_wrapper/d' drivers/kernelsu/Kbuild 2>/dev/null || true
-
-        # Удаляем все #include "file_wrapper.h" из .c и .h файлов
         find drivers/kernelsu/ -name "*.c" -exec sed -i '/#include.*file_wrapper\.h/d' {} \;
         find drivers/kernelsu/ -name "*.h" -exec sed -i '/#include.*file_wrapper\.h/d' {} \;
-
-        # Удаляем все вызовы функций file_wrapper
         find drivers/kernelsu/ -name "*.c" -exec sed -i '/ksu_install_file_wrapper/d' {} \;
         find drivers/kernelsu/ -name "*.c" -exec sed -i '/ksu_file_wrapper_init/d' {} \;
         find drivers/kernelsu/ -name "*.c" -exec sed -i '/ksu_wrapper_/d' {} \;
 
-        # Диагностика: выводим содержимое Makefile/Kbuild и проверяем оставшиеся упоминания
+        # --- Отключаем проблемную часть selinux (несовместима с ядром 4.19) ---
+        if [ -d drivers/kernelsu/selinux ]; then
+            rm -rf drivers/kernelsu/selinux
+            sed -i '/selinux/d' drivers/kernelsu/Makefile 2>/dev/null || true
+            sed -i '/selinux/d' drivers/kernelsu/Kbuild 2>/dev/null || true
+            echo "Removed selinux directory"
+        fi
+
+        # Диагностика: выводим содержимое Makefile и проверяем остатки
         echo "=== drivers/kernelsu/Makefile after cleanup ==="
         grep -v '^#' drivers/kernelsu/Makefile 2>/dev/null | grep -v '^$' || echo "Makefile is empty (or only comments)"
 
