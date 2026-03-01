@@ -88,6 +88,11 @@ jobs:
         if [ -f drivers/kernelsu/su_mount_ns.c ]; then
             sed -i 's|<uapi/linux/mount.h>|<linux/fs.h>|' drivers/kernelsu/su_mount_ns.c
             echo "Patched su_mount_ns.c include"
+        fi                                                                                                                                        
+                # Fix seccomp_cache.c for kernel 4.19 (missing SECCOMP_ARCH_NATIVE_NR)
+        if [ -f drivers/kernelsu/seccomp_cache.c ]; then
+            sed -i '/#include <linux\/fs.h>/a #ifndef SECCOMP_ARCH_NATIVE_NR\n#define SECCOMP_ARCH_NATIVE_NR 512\n#endif\n#ifndef SECCOMP_ARCH_COMPAT_NR\n#define SECCOMP_ARCH_COMPAT_NR 0\n#endif' drivers/kernelsu/seccomp_cache.c
+            echo "Patched seccomp_cache.c with missing defines"
         fi
         echo "KernelSU compat fixes done"
 
