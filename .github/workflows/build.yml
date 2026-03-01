@@ -95,22 +95,29 @@ jobs:
             echo "Patched seccomp_cache.c with missing defines"
         fi
 
-        # --- Усиленное удаление file_wrapper ---
-        # Remove file_wrapper.c entirely (not compatible with kernel 4.19)
-        rm -f drivers/kernelsu/file_wrapper.c
-        # Удаляем все строки, содержащие file_wrapper, из Makefile
-        sed -i '/file_wrapper/d' drivers/kernelsu/Makefile
-        # Удаляем вызовы функций file_wrapper из других исходников
-        find drivers/kernelsu/ -name "*.c" -exec sed -i '/ksu_create_file_wrapper/d' {} \;
-        find drivers/kernelsu/ -name "*.c" -exec sed -i '/ksu_remove_file_wrapper/d' {} \;
+        # --- Полное удаление file_wrapper ---
+        # Удаляем сам файл и заголовок
+        rm -f drivers/kernelsu/file_wrapper.c drivers/kernelsu/file_wrapper.h
+
+        # Удаляем все строки, содержащие file_wrapper, из Makefile и Kbuild
+        sed -i '/file_wrapper/d' drivers/kernelsu/Makefile 2>/dev/null || true
+        sed -i '/file_wrapper/d' drivers/kernelsu/Kbuild 2>/dev/null || true
+
+        # Удаляем все #include "file_wrapper.h" из .c и .h файлов
+        find drivers/kernelsu/ -name "*.c" -exec sed -i '/#include.*file_wrapper\.h/d' {} \;
+        find drivers/kernelsu/ -name "*.h" -exec sed -i '/#include.*file_wrapper\.h/d' {} \;
+
+        # Удаляем все вызовы функций file_wrapper
+        find drivers/kernelsu/ -name "*.c" -exec sed -i '/ksu_install_file_wrapper/d' {} \;
+        find drivers/kernelsu/ -name "*.c" -exec sed -i '/ksu_file_wrapper_init/d' {} \;
         find drivers/kernelsu/ -name "*.c" -exec sed -i '/ksu_wrapper_/d' {} \;
 
-        # Диагностика: выводим содержимое Makefile после правок (без комментариев и пустых строк)
+        # Диагностика: выводим содержимое Makefile/Kbuild и проверяем оставшиеся упоминания
         echo "=== drivers/kernelsu/Makefile after cleanup ==="
-        grep -v '^#' drivers/kernelsu/Makefile | grep -v '^$' || echo "Makefile is empty (or only comments)"
+        grep -v '^#' drivers/kernelsu/Makefile 2>/dev/null | grep -v '^$' || echo "Makefile is empty (or only comments)"
 
-        # Проверяем, остались ли упоминания file_wrapper где-либо в директории
-        if grep -r "file_wrapper" drivers/kernelsu/ 2>/dev/null; then
+        echo "=== Searching for remaining file_wrapper references ==="
+        if grep -r -n "file_wrapper" drivers/kernelsu/ 2>/dev/null; then
             echo "ERROR: file_wrapper references still exist!"
             exit 1
         fi
