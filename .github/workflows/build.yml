@@ -13,6 +13,23 @@ jobs:
         sudo apt-get update -y
         sudo apt-get install -y git bc bison flex libssl-dev make libc6-dev libncurses5-dev crossbuild-essential-arm64 python3 zip unzip libelf-dev gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu ccache
 
+    - name: Set up ccache
+      uses: actions/cache@v4
+      with:
+        path: ~/.ccache
+        key: ccache-kernel-${{ runner.os }}-${{ github.sha }}
+        restore-keys: |
+          ccache-kernel-${{ runner.os }}-
+
+    - name: Configure ccache
+      run: |
+        ccache --max-size=2G
+        ccache --set-config=compression=true
+        ccache --zero-stats
+        echo "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
+        echo "ccache configured, cache dir: $HOME/.ccache"
+        ccache --show-stats
+
     - name: Clone kernel source
       run: |
         git clone --depth=1 https://github.com/maazm7d/kernel_samsung_m12 kernel
@@ -119,6 +136,12 @@ jobs:
         # Comment out lines that call selinux functions
         find drivers/kernelsu/ -name "*.c" -exec sed -i 's/\(.*selinux_.*\)/\/\/ \1/g' {} \;
 
+        # --- Fix app_profile.c after selinux removal ---
+        if [ -f drivers/kernelsu/app_profile.c ]; then
+            sed -i 's/setup_selinux(KERNEL_SU_CONTEXT, cred);/\/\/ setup_selinux(KERNEL_SU_CONTEXT, cred);\n    return true;/g' drivers/kernelsu/app_profile.c
+            echo "Patched app_profile.c: disabled selinux call"
+        fi
+
         # --- Удаляем allowlist.c (не работает без selinux) ---
         rm -f drivers/kernelsu/allowlist.c
         sed -i '/allowlist\.o/d' drivers/kernelsu/Makefile 2>/dev/null || true
@@ -165,7 +188,7 @@ jobs:
       run: |
         cd kernel
         # Собираем с сохранением полного лога
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=aarch64-linux-gnu-gcc KCFLAGS="-w" -j$(nproc) Image 2>&1 | tee /tmp/full_build.log
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache aarch64-linux-gnu-gcc" KCFLAGS="-w" -j$(nproc) Image 2>&1 | tee /tmp/full_build.log
         BUILD_RESULT=${PIPESTATUS[0]}
 
         # Выводим первые 50 ошибок с контекстом (5 строк до и после)
@@ -184,8 +207,18 @@ jobs:
             exit $BUILD_RESULT
         fi
 
-        # Успех – показываем размер образа
+        # Успех – показываем размер образа и статистику ccache
         ls -lh arch/arm64/boot/Image
+        echo "=== ccache stats ==="
+        ccache --show-stats
+
+    - name: Upload build log on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-log
+        path: /tmp/full_build.log
+        retention-days: 7
 
     - name: Clone AnyKernel3
       run: git clone --depth=1 https://github.com/osm0sis/AnyKernel3 anykernel
