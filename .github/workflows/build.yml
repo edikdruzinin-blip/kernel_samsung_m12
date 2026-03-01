@@ -93,15 +93,10 @@ jobs:
             sed -i '/#include <linux\/fs.h>/a #ifndef SECCOMP_ARCH_NATIVE_NR\n#define SECCOMP_ARCH_NATIVE_NR 512\n#endif\n#ifndef SECCOMP_ARCH_COMPAT_NR\n#define SECCOMP_ARCH_COMPAT_NR 0\n#endif' drivers/kernelsu/seccomp_cache.c
             echo "Patched seccomp_cache.c with missing defines"
         fi
-        # Fix file_wrapper.c for kernel 4.19: remove unsupported iopoll and remap_file_range
-        if [ -f drivers/kernelsu/file_wrapper.c ]; then
-            sed -i '/iopoll/d' drivers/kernelsu/file_wrapper.c
-            sed -i '/remap_file_range/d' drivers/kernelsu/file_wrapper.c
-            echo "Patched file_wrapper.c: removed iopoll and remap_file_range"
-        fi
         # Remove file_wrapper.c entirely (not compatible with kernel 4.19)
         rm -f drivers/kernelsu/file_wrapper.c
-        sed -i '/file_wrapper\.o/d' drivers/kernelsu/Makefile
+        # Robust Makefile patching via base64-encoded python (handles tabs/spaces/continuations)
+        echo "aW1wb3J0IHJlLCBvcwpta2YgPSAnZHJpdmVycy9rZXJuZWxzdS9NYWtlZmlsZScKaWYgb3MucGF0aC5leGlzdHMobWtmKToKICAgIGMgPSBvcGVuKG1rZikucmVhZCgpCiAgICBvcmlnID0gYwogICAgYyA9IHJlLnN1YihyJ1sgXHRdKmZpbGVfd3JhcHBlclwub1sgXHRdKlxcP1xuPycsICcnLCBjKQogICAgYyA9IHJlLnN1YihyJ1sgXHRdKmZpbGVfd3JhcHBlclwubycsICcnLCBjKQogICAgaWYgYyAhPSBvcmlnOgogICAgICAgIG9wZW4obWtmLCAndycpLndyaXRlKGMpCiAgICAgICAgcHJpbnQoJ1BhdGNoZWQgTWFrZWZpbGU6IHJlbW92ZWQgZmlsZV93cmFwcGVyLm8nKQogICAgZWxzZToKICAgICAgICBwcmludCgnZmlsZV93cmFwcGVyLm8gbm90IGZvdW5kIGluIE1ha2VmaWxlJykK" | base64 -d > /tmp/patch_mkf.py && python3 /tmp/patch_mkf.py
         echo "Removed file_wrapper.c"
         echo "KernelSU compat fixes done"
 
