@@ -59,6 +59,7 @@ jobs:
       run: |
         cd kernel
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+
     - name: Fix KernelSU compatibility
       run: |
         cd kernel
@@ -93,17 +94,27 @@ jobs:
             sed -i '/#include <linux\/fs.h>/a #ifndef SECCOMP_ARCH_NATIVE_NR\n#define SECCOMP_ARCH_NATIVE_NR 512\n#endif\n#ifndef SECCOMP_ARCH_COMPAT_NR\n#define SECCOMP_ARCH_COMPAT_NR 0\n#endif' drivers/kernelsu/seccomp_cache.c
             echo "Patched seccomp_cache.c with missing defines"
         fi
+
+        # --- Усиленное удаление file_wrapper ---
         # Remove file_wrapper.c entirely (not compatible with kernel 4.19)
         rm -f drivers/kernelsu/file_wrapper.c
-        # Remove file_wrapper.o from Makefile
+        # Удаляем все строки, содержащие file_wrapper, из Makefile
         sed -i '/file_wrapper/d' drivers/kernelsu/Makefile
-        # Remove references to file_wrapper functions from other source files
+        # Удаляем вызовы функций file_wrapper из других исходников
         find drivers/kernelsu/ -name "*.c" -exec sed -i '/ksu_create_file_wrapper/d' {} \;
         find drivers/kernelsu/ -name "*.c" -exec sed -i '/ksu_remove_file_wrapper/d' {} \;
         find drivers/kernelsu/ -name "*.c" -exec sed -i '/ksu_wrapper_/d' {} \;
-        
+
+        # Диагностика: выводим содержимое Makefile после правок (без комментариев и пустых строк)
+        echo "=== drivers/kernelsu/Makefile after cleanup ==="
+        grep -v '^#' drivers/kernelsu/Makefile | grep -v '^$' || echo "Makefile is empty (or only comments)"
+
+        # Проверяем, остались ли упоминания file_wrapper где-либо в директории
+        if grep -r "file_wrapper" drivers/kernelsu/ 2>/dev/null; then
+            echo "ERROR: file_wrapper references still exist!"
+            exit 1
+        fi
         echo "Removed file_wrapper.c and related function calls"
-        
         echo "KernelSU compat fixes done"
 
     - name: Configure kernel (using physwizz base config)
@@ -133,10 +144,27 @@ jobs:
     - name: Build kernel
       run: |
         cd kernel
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=aarch64-linux-gnu-gcc KCFLAGS="-w" -j$(nproc) Image 2>&1 | tee /tmp/build.log; true
-        echo "=== ERRORS ==="
-        grep -E "^.*(error:|Error [0-9]|undefined reference)" /tmp/build.log | head -50 || true
+        # Собираем с сохранением полного лога
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=aarch64-linux-gnu-gcc KCFLAGS="-w" -j$(nproc) Image 2>&1 | tee /tmp/full_build.log
+        BUILD_RESULT=${PIPESTATUS[0]}
+
+        # Выводим первые 50 ошибок с контекстом (5 строк до и после)
+        echo "=== ERRORS WITH CONTEXT ==="
+        grep -n -B5 -A5 "error:" /tmp/full_build.log | head -100 || echo "No errors found"
         echo "=== END ERRORS ==="
+
+        # Проверяем наличие file_wrapper в логах (если ошибка повторяется)
+        echo "=== SEARCHING FOR file_wrapper IN LOG ==="
+        grep -n "file_wrapper" /tmp/full_build.log | head -20 || echo "No file_wrapper in log"
+
+        # Если сборка не удалась, выводим последние 50 строк лога для контекста
+        if [ $BUILD_RESULT -ne 0 ]; then
+            echo "=== LAST 50 LINES OF BUILD LOG ==="
+            tail -50 /tmp/full_build.log
+            exit $BUILD_RESULT
+        fi
+
+        # Успех – показываем размер образа
         ls -lh arch/arm64/boot/Image
 
     - name: Clone AnyKernel3
