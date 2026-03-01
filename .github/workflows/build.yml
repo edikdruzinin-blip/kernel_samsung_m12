@@ -119,6 +119,12 @@ jobs:
         # Comment out lines that call selinux functions
         find drivers/kernelsu/ -name "*.c" -exec sed -i 's/\(.*selinux_.*\)/\/\/ \1/g' {} \;
 
+        # --- Удаляем allowlist.c (не работает без selinux) ---
+        rm -f drivers/kernelsu/allowlist.c
+        sed -i '/allowlist\.o/d' drivers/kernelsu/Makefile 2>/dev/null || true
+        sed -i '/allowlist\.o/d' drivers/kernelsu/Kbuild 2>/dev/null || true
+        echo "Removed allowlist.c (incompatible)"
+
         # Диагностика: выводим содержимое Makefile и проверяем остатки
         echo "=== drivers/kernelsu/Makefile after cleanup ==="
         grep -v '^#' drivers/kernelsu/Makefile 2>/dev/null | grep -v '^$' || echo "Makefile is empty (or only comments)"
