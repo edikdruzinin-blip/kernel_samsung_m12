@@ -95,13 +95,14 @@ jobs:
         fi
         # Remove file_wrapper.c entirely (not compatible with kernel 4.19)
         rm -f drivers/kernelsu/file_wrapper.c
-        # Robust Makefile patching via base64-encoded python (handles tabs/spaces/continuations)
-        echo "aW1wb3J0IHJlLCBvcwpta2YgPSAnZHJpdmVycy9rZXJuZWxzdS9NYWtlZmlsZScKaWYgb3MucGF0aC5leGlzdHMobWtmKToKICAgIGMgPSBvcGVuKG1rZikucmVhZCgpCiAgICBvcmlnID0gYwogICAgYyA9IHJlLnN1YihyJ1sgXHRdKmZpbGVfd3JhcHBlclwub1sgXHRdKlxcP1xuPycsICcnLCBjKQogICAgYyA9IHJlLnN1YihyJ1sgXHRdKmZpbGVfd3JhcHBlclwubycsICcnLCBjKQogICAgaWYgYyAhPSBvcmlnOgogICAgICAgIG9wZW4obWtmLCAndycpLndyaXRlKGMpCiAgICAgICAgcHJpbnQoJ1BhdGNoZWQgTWFrZWZpbGU6IHJlbW92ZWQgZmlsZV93cmFwcGVyLm8nKQogICAgZWxzZToKICAgICAgICBwcmludCgnZmlsZV93cmFwcGVyLm8gbm90IGZvdW5kIGluIE1ha2VmaWxlJykK" | base64 -d > /tmp/patch_mkf.py && python3 /tmp/patch_mkf.py
+        # Remove file_wrapper.o from Makefile
+        sed -i '/file_wrapper\.o/d' drivers/kernelsu/Makefile
         # Remove references to file_wrapper functions from other source files
         find drivers/kernelsu/ -name "*.c" -exec sed -i '/ksu_create_file_wrapper/d' {} \;
         find drivers/kernelsu/ -name "*.c" -exec sed -i '/ksu_remove_file_wrapper/d' {} \;
         find drivers/kernelsu/ -name "*.c" -exec sed -i '/ksu_wrapper_/d' {} \;
         echo "Removed file_wrapper.c and related function calls"
+        
         echo "KernelSU compat fixes done"
 
     - name: Configure kernel (using physwizz base config)
