@@ -167,10 +167,115 @@ jobs:
         fi
         echo "Removed file_wrapper.c and related function calls"
 
-        # --- Create compat_419.h with all 4.19 API shims ---
-        # Force-included into every KernelSU .c file via ccflags-y in Makefile
-        echo "LyogS2VybmVsU1UgY29tcGF0aWJpbGl0eSBzaGltcyBmb3IgU2Ftc3VuZyBrZXJuZWwgNC4xOQogKiBBdXRvLWdlbmVyYXRlZCBieSBidWlsZCBzeXN0ZW0g4oCUIGRvIG5vdCBlZGl0IG1hbnVhbGx5CiAqIEZvcmNlLWluY2x1ZGVkIGludG8gYWxsIGRyaXZlcnMva2VybmVsc3UvKi5jIHZpYSBjY2ZsYWdzLXkKICovCiNpZm5kZWYgX19LRVJORUxTVV9DT01QQVRfNDE5X0gKI2RlZmluZSBfX0tFUk5FTFNVX0NPTVBBVF80MTlfSAoKI2luY2x1ZGUgPGxpbnV4L3ZlcnNpb24uaD4KI2luY2x1ZGUgPGxpbnV4L3R5cGVzLmg+CgovKiAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KICogS2VybmVsIDUuOCs6IG1tYXBfc2VtIHJlbmFtZWQgdG8gbW1hcF9sb2NrIEFQSQogKiBJbiA0LjE5OiBtbS0+bW1hcF9zZW0gKHJ3c2VtKQogKiAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0gKi8KI2lmIExJTlVYX1ZFUlNJT05fQ09ERSA8IEtFUk5FTF9WRVJTSU9OKDUsIDgsIDApCiNpbmNsdWRlIDxsaW51eC9tbV90eXBlcy5oPgojaW5jbHVkZSA8bGludXgvcndzZW0uaD4KCnN0YXRpYyBfX2Fsd2F5c19pbmxpbmUgaW50IG1tYXBfcmVhZF90cnlsb2NrKHN0cnVjdCBtbV9zdHJ1Y3QgKm1tKQp7CiAgICByZXR1cm4gZG93bl9yZWFkX3RyeWxvY2soJm1tLT5tbWFwX3NlbSk7Cn0Kc3RhdGljIF9fYWx3YXlzX2lubGluZSB2b2lkIG1tYXBfcmVhZF91bmxvY2soc3RydWN0IG1tX3N0cnVjdCAqbW0pCnsKICAgIHVwX3JlYWQoJm1tLT5tbWFwX3NlbSk7Cn0KI2VuZGlmIC8qIDwgNS44ICovCgovKiAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KICogS2VybmVsIDUuOCs6IHByb2JlX2tlcm5lbF8qL2FjY2Vzc19vayBub2ZhdWx0IHZhcmlhbnRzCiAqIEluIDQuMTk6IHVzZSBzdHJuY3B5X2Zyb21fdXNlciAvIF9fY29weV9mcm9tX3VzZXJfaW5hdG9taWMKICogLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tICovCiNpZiBMSU5VWF9WRVJTSU9OX0NPREUgPCBLRVJORUxfVkVSU0lPTig1LCA4LCAwKQojaW5jbHVkZSA8bGludXgvdWFjY2Vzcy5oPgoKc3RhdGljIF9fYWx3YXlzX2lubGluZSBsb25nCmNvcHlfZnJvbV91c2VyX25vZmF1bHQodm9pZCAqZHN0LCBjb25zdCB2b2lkIF9fdXNlciAqc3JjLCBzaXplX3Qgc2l6ZSkKewogICAgbG9uZyByZXQ7CiAgICBpZiAoIWFjY2Vzc19vayhWRVJJRllfUkVBRCwgc3JjLCBzaXplKSkKICAgICAgICByZXR1cm4gLUVGQVVMVDsKICAgIHBhZ2VmYXVsdF9kaXNhYmxlKCk7CiAgICByZXQgPSBfX2NvcHlfZnJvbV91c2VyX2luYXRvbWljKGRzdCwgc3JjLCBzaXplKSA/IC1FRkFVTFQgOiAwOwogICAgcGFnZWZhdWx0X2VuYWJsZSgpOwogICAgcmV0dXJuIHJldDsKfQoKc3RhdGljIF9fYWx3YXlzX2lubGluZSBsb25nCmNvcHlfdG9fdXNlcl9ub2ZhdWx0KHZvaWQgX191c2VyICpkc3QsIGNvbnN0IHZvaWQgKnNyYywgc2l6ZV90IHNpemUpCnsKICAgIGxvbmcgcmV0OwogICAgaWYgKCFhY2Nlc3Nfb2soVkVSSUZZX1dSSVRFLCBkc3QsIHNpemUpKQogICAgICAgIHJldHVybiAtRUZBVUxUOwogICAgcGFnZWZhdWx0X2Rpc2FibGUoKTsKICAgIHJldCA9IF9fY29weV90b191c2VyX2luYXRvbWljKGRzdCwgc3JjLCBzaXplKSA/IC1FRkFVTFQgOiAwOwogICAgcGFnZWZhdWx0X2VuYWJsZSgpOwogICAgcmV0dXJuIHJldDsKfQoKc3RhdGljIF9fYWx3YXlzX2lubGluZSBsb25nCnN0cm5jcHlfZnJvbV91c2VyX25vZmF1bHQoY2hhciAqZHN0LCBjb25zdCB2b2lkIF9fdXNlciAqc3JjLCBsb25nIGNvdW50KQp7CiAgICByZXR1cm4gc3RybmNweV9mcm9tX3VzZXIoZHN0LCAoY29uc3QgY2hhciBfX3VzZXIgKilzcmMsIGNvdW50KTsKfQojZW5kaWYgLyogPCA1LjggKi8KCi8qIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQogKiBLZXJuZWwgNS45KzogcGF0aF9tb3VudCgpIHJlcGxhY2VkIGRvX21vdW50KCkKICogc3VfbW91bnRfbnMuYyB1c2VzIHRoaXMgZm9yIHBlci1uYW1lc3BhY2UgYmluZCBtb3VudHMuCiAqIFJldHVybiBFTk9TWVMg4oCUIG5hbWVzcGFjZSBtb3VudHMgZGVncmFkZSBncmFjZWZ1bGx5IG9uIDQuMTkuCiAqIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLSAqLwojaWYgTElOVVhfVkVSU0lPTl9DT0RFIDwgS0VSTkVMX1ZFUlNJT04oNSwgOSwgMCkKI2luY2x1ZGUgPGxpbnV4L3BhdGguaD4Kc3RhdGljIF9fYWx3YXlzX2lubGluZSBpbnQKcGF0aF9tb3VudChjb25zdCBjaGFyICpkZXZfbmFtZSwgc3RydWN0IHBhdGggKnBhdGgsCiAgICAgICAgICAgY29uc3QgY2hhciAqdHlwZV9wYWdlLCB1bnNpZ25lZCBsb25nIGZsYWdzLCB2b2lkICpkYXRhX3BhZ2UpCnsKICAgIHJldHVybiAtRU5PU1lTOwp9CiNlbmRpZiAvKiA8IDUuOSAqLwoKLyogLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCiAqIFNFTGludXggc3R1YnMg4oCUIHNlbGludXgvIGRpcmVjdG9yeSByZW1vdmVkIGZvciA0LjE5IGNvbXBhdC4KICogVGhlc2UgZnVuY3Rpb25zIHdlcmUgZGVmaW5lZCBpbiBkcml2ZXJzL2tlcm5lbHN1L3NlbGludXgvLgogKiAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0gKi8KI2lmbmRlZiBfX0tFUk5FTFNVX1NFTElOVVhfU1RVQlMKI2RlZmluZSBfX0tFUk5FTFNVX1NFTElOVVhfU1RVQlMKI2luY2x1ZGUgPGxpbnV4L2NyZWQuaD4KCnN0YXRpYyBfX2Fsd2F5c19pbmxpbmUgdm9pZCBhcHBseV9rZXJuZWxzdV9ydWxlcyh2b2lkKSB7fQpzdGF0aWMgX19hbHdheXNfaW5saW5lIHZvaWQgY2FjaGVfc2lkKHVuc2lnbmVkIGludCBzaWQpIHt9CnN0YXRpYyBfX2Fsd2F5c19pbmxpbmUgYm9vbCBzZXR1cF9rc3VfY3JlZChzdHJ1Y3QgY3JlZCAqY3JlZCkgeyByZXR1cm4gdHJ1ZTsgfQovKiBoYW5kbGVfc2Vwb2xpY3koc2l6ZSwgdXNlcl9idWYpIOKAlCBjYWxsZWQgZnJvbSBzdXBlcmNhbGxzLmMgKi8Kc3RhdGljIF9fYWx3YXlzX2lubGluZSBpbnQKaGFuZGxlX3NlcG9saWN5KHVuc2lnbmVkIGxvbmcgc2l6ZSwgdm9pZCBfX3VzZXIgKmJ1ZikgeyByZXR1cm4gMDsgfQojZW5kaWYgLyogX19LRVJORUxTVV9TRUxJTlVYX1NUVUJTICovCgovKiAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KICogYWxsb3dsaXN0IHN0dWJzIOKAlCBhbGxvd2xpc3QuYyByZW1vdmVkIGZvciA0LjE5IGNvbXBhdC4KICogLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tICovCiNpZm5kZWYgX19LRVJORUxTVV9BTExPV0xJU1RfU1RVQlMKI2RlZmluZSBfX0tFUk5FTFNVX0FMTE9XTElTVF9TVFVCUwpzdGF0aWMgX19hbHdheXNfaW5saW5lIHZvaWQga3N1X2xvYWRfYWxsb3dfbGlzdCh2b2lkKSB7fQojZW5kaWYKCiNlbmRpZiAvKiBfX0tFUk5FTFNVX0NPTVBBVF80MTlfSCAqLwo=" | base64 -d > drivers/kernelsu/compat_419.h
-        echo "Created compat_419.h with API shims"
+        # --- Create compat_419.h with all 4.19 API shims (using // comments) ---
+        cat > drivers/kernelsu/compat_419.h << 'EOF'
+// KernelSU compatibility shims for Samsung kernel 4.19
+// Auto-generated by build system — do not edit manually
+// Force-included into all drivers/kernelsu/*.c via ccflags-y
+#ifndef __KERNELSU_COMPAT_419_H
+#define __KERNELSU_COMPAT_419_H
+
+#include <linux/version.h>
+#include <linux/types.h>
+
+// ------------------------------------------------------------
+// Kernel 5.8+: mmap_sem renamed to mmap_lock API
+// In 4.19: mm->mmap_sem (rwsem)
+// ------------------------------------------------------------
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 8, 0)
+#include <linux/mm_types.h>
+#include <linux/rwsem.h>
+
+static __always_inline int mmap_read_trylock(struct mm_struct *mm)
+{
+    return down_read_trylock(&mm->mmap_sem);
+}
+static __always_inline void mmap_read_unlock(struct mm_struct *mm)
+{
+    up_read(&mm->mmap_sem);
+}
+#endif // < 5.8
+
+// ------------------------------------------------------------
+// Kernel 5.8+: probe_kernel_*/access_ok nofault variants
+// In 4.19: use strncpy_from_user / __copy_from_user_inatomic
+// ------------------------------------------------------------
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 8, 0)
+#include <linux/uaccess.h>
+
+static __always_inline long
+copy_from_user_nofault(void *dst, const void __user *src, size_t size)
+{
+    long ret;
+    if (!access_ok(VERIFY_READ, src, size))
+        return -EFAULT;
+    pagefault_disable();
+    ret = __copy_from_user_inatomic(dst, src, size) ? -EFAULT : 0;
+    pagefault_enable();
+    return ret;
+}
+
+static __always_inline long
+copy_to_user_nofault(void __user *dst, const void *src, size_t size)
+{
+    long ret;
+    if (!access_ok(VERIFY_WRITE, dst, size))
+        return -EFAULT;
+    pagefault_disable();
+    ret = __copy_to_user_inatomic(dst, src, size) ? -EFAULT : 0;
+    pagefault_enable();
+    return ret;
+}
+
+static __always_inline long
+strncpy_from_user_nofault(char *dst, const void __user *src, long count)
+{
+    return strncpy_from_user(dst, (const char __user *)src, count);
+}
+#endif // < 5.8
+
+// ------------------------------------------------------------
+// Kernel 5.9+: path_mount() replaced do_mount()
+// su_mount_ns.c uses this for per-namespace bind mounts.
+// Return ENOSYS — namespace mounts degrade gracefully on 4.19.
+// ------------------------------------------------------------
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 9, 0)
+#include <linux/path.h>
+static __always_inline int
+path_mount(const char *dev_name, struct path *path,
+           const char *type_page, unsigned long flags, void *data_page)
+{
+    return -ENOSYS;
+}
+#endif // < 5.9
+
+// ------------------------------------------------------------
+// SELinux stubs — selinux/ directory removed for 4.19 compat.
+// These functions were defined in drivers/kernelsu/selinux/.
+// ------------------------------------------------------------
+#ifndef __KERNELSU_SELINUX_STUBS
+#define __KERNELSU_SELINUX_STUBS
+#include <linux/cred.h>
+
+static __always_inline void apply_kernelsu_rules(void) {}
+static __always_inline void cache_sid(unsigned int sid) {}
+static __always_inline bool setup_ksu_cred(struct cred *cred) { return true; }
+// handle_sepolicy(size, user_buf) — called from supercalls.c
+static __always_inline int
+handle_sepolicy(unsigned long size, void __user *buf) { return 0; }
+#endif // __KERNELSU_SELINUX_STUBS
+
+// ------------------------------------------------------------
+// allowlist stubs — allowlist.c removed for 4.19 compat.
+// ------------------------------------------------------------
+#ifndef __KERNELSU_ALLOWLIST_STUBS
+#define __KERNELSU_ALLOWLIST_STUBS
+static __always_inline void ksu_load_allow_list(void) {}
+#endif
+
+#endif // __KERNELSU_COMPAT_419_H
+EOF
+        echo "Created compat_419.h with API shims (using // comments)"
 
         # Patch KernelSU Makefile to force-include compat_419.h in all .c files
         # This provides: mmap_read_*, copy_*_user_nofault, path_mount, selinux stubs, allowlist stubs
