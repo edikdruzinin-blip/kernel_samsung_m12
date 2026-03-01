@@ -188,8 +188,36 @@ jobs:
       run: |
         cd kernel
         # Собираем с сохранением полного лога
+        # Build kernel Image
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache aarch64-linux-gnu-gcc" KCFLAGS="-w" -j$(nproc) Image 2>&1 | tee /tmp/full_build.log
-        BUILD_RESULT=${PIPESTATUS[0]}
+        BUILD_RESULT_IMG=${PIPESTATUS[0]}
+
+        # Build kernel modules (.ko)
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache aarch64-linux-gnu-gcc" KCFLAGS="-w" -j$(nproc) -k modules 2>&1 | tee -a /tmp/full_build.log || true  # -k: keep going past firmware-dep errors
+        BUILD_RESULT_MOD=${PIPESTATUS[0]}
+
+        # Install modules into staging directory (strip debug symbols)
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules_install INSTALL_MOD_PATH=../modules_staging INSTALL_MOD_STRIP=1
+
+        # Generate modules.dep / modules.alias / modules.softdep via depmod
+        # These are required for proper modprobe dependency resolution on device
+        KVER=$(ls ../modules_staging/lib/modules/ 2>/dev/null | head -1)
+        if [ -n "$KVER" ]; then
+            echo "Running depmod for kernel version: $KVER"
+            depmod -b ../modules_staging "$KVER" 2>/dev/null ||             depmod -ae -F System.map -b ../modules_staging "$KVER" 2>/dev/null ||             echo "depmod skipped (non-fatal)"
+        fi
+
+        # Remove symlinks that confuse AnyKernel (build/source)
+        find ../modules_staging -type l -delete
+
+        echo "=== Collected modules ==="
+        find ../modules_staging -name "*.ko" | wc -l
+        find ../modules_staging -name "*.ko" | head -20
+        echo "=== modules.dep entries ==="
+        wc -l ../modules_staging/lib/modules/*/modules.dep 2>/dev/null || echo "no modules.dep generated"
+
+        # Use worst exit code
+        BUILD_RESULT=$(( BUILD_RESULT_IMG > BUILD_RESULT_MOD ? BUILD_RESULT_IMG : BUILD_RESULT_MOD ))
 
         # Выводим первые 50 ошибок с контекстом (5 строк до и после)
         echo "=== ERRORS WITH CONTEXT ==="
@@ -226,9 +254,35 @@ jobs:
     - name: Package kernel
       run: |
         cp kernel/arch/arm64/boot/Image anykernel/
-        echo "a2VybmVsLnN0cmluZz1TTS1NMTI3RiBLZXJuZWxTVSBLZXJuZWwKZG8uZGV2aWNlY2hlY2s9MQpkby5tb2R1bGVzPTAKZG8uc3lzdGVtbGVzcz0xCmRvLmNsZWFudXA9MQpkby5jbGVhbnVwb25hYm9ydD0wCmRldmljZS5uYW1lMT1tMTIKZGV2aWNlLm5hbWUyPW0xMm5hY2hvCmRldmljZS5uYW1lMz1TTS1NMTI3RgpzdXBwb3J0ZWQudmVyc2lvbnM9MTEKCi4gdG9vbHMvYWszLWNvcmUuc2gKCmR1bXBfYm9vdDsKcGF0Y2hfY21kbGluZSAiYW5kcm9pZGJvb3Quc2VsaW51eCIgImFuZHJvaWRib290LnNlbGludXg9cGVybWlzc2l2ZSI7CnBhdGNoX2NtZGxpbmUgInNlbGludXgiICJzZWxpbnV4PTAiOwpwYXRjaF9jbWRsaW5lICJlbmZvcmNpbmciICJlbmZvcmNpbmc9MCI7CnBhdGNoX2NtZGxpbmUgInpyYW0ubnVtX2RldmljZXMiICJ6cmFtLm51bV9kZXZpY2VzPTEiOwp3cml0ZV9ib290Owo=" | base64 -d > anykernel/anykernel.sh
+
+        # Copy modules into AnyKernel3 structure
+        # do.modules=2 → AnyKernel installs modules/vendor/lib/modules/ → /vendor/lib/modules/
+        # (Samsung Android 11 uses separate vendor partition, NOT /system/lib/modules)
+        MODS_DEST=anykernel/modules/vendor/lib/modules
+        mkdir -p "$MODS_DEST"
+        if [ -d modules_staging ]; then
+            # Copy .ko files
+            find modules_staging -name "*.ko" -exec cp {} "$MODS_DEST/" \;
+            # Copy depmod metadata files so modprobe works on device
+            KVER=$(ls modules_staging/lib/modules/ 2>/dev/null | head -1)
+            if [ -n "$KVER" ]; then
+                for f in modules.dep modules.alias modules.softdep modules.load modules.order; do
+                    src="modules_staging/lib/modules/$KVER/$f"
+                    [ -f "$src" ] && cp "$src" "$MODS_DEST/" && echo "Copied $f"
+                done
+            fi
+            MOD_COUNT=$(find "$MODS_DEST" -name "*.ko" | wc -l)
+            echo "=== Packaged $MOD_COUNT kernel modules ==="
+            ls "$MODS_DEST"
+        else
+            echo "No modules_staging directory found, skipping modules"
+        fi
+
+        echo "a2VybmVsLnN0cmluZz1TTS1NMTI3RiBLZXJuZWxTVSBLZXJuZWwKZG8uZGV2aWNlY2hlY2s9MQpkby5tb2R1bGVzPTIKZG8uc3lzdGVtbGVzcz0xCmRvLmNsZWFudXA9MQpkby5jbGVhbnVwb25hYm9ydD0wCmRldmljZS5uYW1lMT1tMTIKZGV2aWNlLm5hbWUyPW0xMm5hY2hvCmRldmljZS5uYW1lMz1TTS1NMTI3RgpzdXBwb3J0ZWQudmVyc2lvbnM9MTEKCi4gdG9vbHMvYWszLWNvcmUuc2gKCmR1bXBfYm9vdDsKcGF0Y2hfY21kbGluZSAiYW5kcm9pZGJvb3Quc2VsaW51eCIgImFuZHJvaWRib290LnNlbGludXg9cGVybWlzc2l2ZSI7CnBhdGNoX2NtZGxpbmUgInNlbGludXgiICJzZWxpbnV4PTAiOwpwYXRjaF9jbWRsaW5lICJlbmZvcmNpbmciICJlbmZvcmNpbmc9MCI7CnBhdGNoX2NtZGxpbmUgInpyYW0ubnVtX2RldmljZXMiICJ6cmFtLm51bV9kZXZpY2VzPTEiOwp3cml0ZV9ib290Owo=" | base64 -d > anykernel/anykernel.sh
         cd anykernel && zip -r9 ../SM-M127F_KernelSU.zip . -x "*.git*" "*.github*" "*.md"
         ls -lh ../SM-M127F_KernelSU.zip
+        echo "=== ZIP contents (modules) ==="
+        unzip -l ../SM-M127F_KernelSU.zip | grep "\.ko" | wc -l | xargs echo "Total .ko files in zip:"
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
