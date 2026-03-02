@@ -190,9 +190,7 @@ jobs:
             echo 'obj-y += ksu_extra_stubs.o' >> drivers/kernelsu/Makefile
             echo "Added ksu_extra_stubs.o to Makefile"
         fi
-        # Also add to samsung_stubs in case download_sensorhub_firmware is not in kernelsu dir
-        echo "int __weak download_sensorhub_firmware(void *dev) { return -ENOENT; }" >> init/samsung_stubs.c 2>/dev/null || true
-        echo "Created ksu_extra_stubs.c"
+        echo "Created ksu_extra_stubs.c (download_sensorhub_firmware already in samsung_stubs.c)"
 
         # Patch KernelSU Makefile to force-include compat_419.h in all .c files
         # This provides: mmap_read_*, copy_*_user_nofault, path_mount, selinux stubs, allowlist stubs
