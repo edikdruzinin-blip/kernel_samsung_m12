@@ -239,7 +239,7 @@ jobs:
         cd kernel
         # Собираем с сохранением полного лога
         # Build kernel Image
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache aarch64-linux-gnu-gcc" KCFLAGS="-w" -j$(nproc) Image dtbs 2>&1 | tee /tmp/full_build.log
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache aarch64-linux-gnu-gcc" KCFLAGS="-w" -j$(nproc) Image 2>&1 | tee /tmp/full_build.log
         BUILD_RESULT_IMG=${PIPESTATUS[0]}
 
         # Build kernel modules (.ko) — best-effort, partial failures from firmware deps are expected
@@ -287,15 +287,6 @@ jobs:
         fi
 
         # Успех – показываем размер образа и статистику ccache
-        # Append DTBs - Samsung Exynos needs Image+DTB or it bootloops
-        if ls arch/arm64/boot/dts/exynos/*.dtb 1>/dev/null 2>&1; then
-            cat arch/arm64/boot/Image arch/arm64/boot/dts/exynos/*.dtb > arch/arm64/boot/Image-dtb
-            echo "Image-dtb created with $(ls arch/arm64/boot/dts/exynos/*.dtb | wc -l) DTBs"
-            ls -lh arch/arm64/boot/Image-dtb
-        else
-            echo "No DTBs found, using plain Image"
-            cp arch/arm64/boot/Image arch/arm64/boot/Image-dtb
-        fi
         echo "=== ccache stats ==="
         ccache --show-stats
 
@@ -312,7 +303,7 @@ jobs:
 
     - name: Package kernel
       run: |
-        cp kernel/arch/arm64/boot/Image-dtb anykernel/Image
+        cp kernel/arch/arm64/boot/Image anykernel/
 
         # Copy modules into AnyKernel3 structure
         # do.modules=2 → AnyKernel installs modules/vendor/lib/modules/ → /vendor/lib/modules/
