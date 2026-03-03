@@ -269,19 +269,20 @@ jobs:
         # Only Image build result matters — modules are best-effort
         BUILD_RESULT=$BUILD_RESULT_IMG
 
-        # Выводим первые 50 ошибок с контекстом (5 строк до и после)
-        echo "=== ERRORS WITH CONTEXT ==="
-        grep -n -B5 -A5 "error:" /tmp/full_build.log | head -100 || echo "No errors found"
-        echo "=== END ERRORS ==="
+        # --- Диагностика при любом исходе ---
+        echo "=== LINKER ERRORS ==="
+        grep -E "undefined reference|relocation|cannot find -l" /tmp/full_build.log | head -60 || echo "No linker errors"
+        echo "=== END LINKER ERRORS ==="
 
-        # Проверяем наличие file_wrapper в логах (если ошибка повторяется)
-        echo "=== SEARCHING FOR file_wrapper IN LOG ==="
-        grep -n "file_wrapper" /tmp/full_build.log | head -20 || echo "No file_wrapper in log"
+        echo "=== COMPILER ERRORS ==="
+        grep -E "error:" /tmp/full_build.log | grep -v "^Binary" | head -40 || echo "No compiler errors"
+        echo "=== END COMPILER ERRORS ==="
 
-        # Если сборка не удалась, выводим последние 50 строк лога для контекста
+        echo "=== LAST 80 LINES ==="
+        tail -80 /tmp/full_build.log
+        echo "=== END LAST 80 LINES ==="
+
         if [ $BUILD_RESULT -ne 0 ]; then
-            echo "=== LAST 50 LINES OF BUILD LOG ==="
-            tail -50 /tmp/full_build.log
             exit $BUILD_RESULT
         fi
 
