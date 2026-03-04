@@ -213,28 +213,35 @@ jobs:
     - name: Patch VDSO for clang cross-compilation
       run: |
         cd kernel
-        # VDSO Makefile in 4.19 passes .S files to clang which then calls /usr/bin/as (x86)
-        # Fix: force -fintegrated-as so clang uses its own ARM64 assembler
         VDSO_MK="arch/arm64/kernel/vdso/Makefile"
-        if [ -f "$VDSO_MK" ]; then
-            # Add -fintegrated-as to VDSO C flags
+        if [ -f "$VDSO_MK" ] && ! grep -q "fintegrated-as" "$VDSO_MK"; then
+            sed -i 's/^ccflags-y\s*:=/ccflags-y := -fintegrated-as/' "$VDSO_MK"
             if ! grep -q "fintegrated-as" "$VDSO_MK"; then
-                sed -i 's/^ccflags-y\s*:=/ccflags-y := -fintegrated-as/; t; s/^ccflags-y\s*+=/ccflags-y += -fintegrated-as/' "$VDSO_MK"
-                # If ccflags-y line doesn't exist, add it
-                if ! grep -q "ccflags-y" "$VDSO_MK"; then
-                    sed -i '1s/^/ccflags-y += -fintegrated-as\naflags-y += -fintegrated-as\n/' "$VDSO_MK"
-                fi
-                # Also patch aflags/asflags
-                sed -i 's/^aflags-y\s*:=/aflags-y := -fintegrated-as/; t; s/^aflags-y\s*+=/aflags-y += -fintegrated-as/' "$VDSO_MK"
-                echo "Patched $VDSO_MK with -fintegrated-as"
+                sed -i '1s/^/ccflags-y += -fintegrated-as\n/' "$VDSO_MK"
             fi
-            echo "=== VDSO Makefile ==="
-            cat "$VDSO_MK"
-        else
-            echo "VDSO Makefile not found at $VDSO_MK"
+            echo "Patched $VDSO_MK with -fintegrated-as"
         fi
-        # Also patch arch/arm64/Makefile to add -fintegrated-as globally for clang
-        sed -i '/^KBUILD_CFLAGS\s*+=/i KBUILD_CFLAGS += -fintegrated-as\nKBUILD_AFLAGS += -fintegrated-as' arch/arm64/Makefile 2>/dev/null | head -1 || true
+
+        # Fix gettimeofday.S: clang doesn't support named macro args (shift=1)
+        # Replace all occurrences of "macro_name, shift=N" -> "macro_name, N"
+        GTOD="arch/arm64/kernel/vdso/gettimeofday.S"
+        if [ -f "$GTOD" ]; then
+            sed -i 's/clock_gettime_return, shift=\([0-9]*\)/clock_gettime_return, \1/g' "$GTOD"
+            # Generic fallback for any other named args in macros
+            sed -i 's/\bshift=\([0-9]*\)/\1/g' "$GTOD"
+            echo "Patched $GTOD: replaced named macro args"
+        fi
+
+        # Fix note.S: clang rejects @note section type, use numeric 0x7 instead
+        NOTE="arch/arm64/kernel/vdso/note.S"
+        if [ -f "$NOTE" ]; then
+            # Replace "",@note with "a" (allocatable) - acceptable for clang
+            sed -i 's/\.pushsection \.note\.Linux, "",@note/.pushsection .note.Linux, "a"/g' "$NOTE"
+            sed -i 's/\.section \.note\.Linux,"",@note/.section .note.Linux,"a"/g' "$NOTE"
+            echo "Patched $NOTE: fixed section flags"
+        fi
+
+        echo "VDSO patches done"
 
     - name: Configure kernel (using physwizz base config)
       run: |
