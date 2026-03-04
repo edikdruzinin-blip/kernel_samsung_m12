@@ -214,31 +214,28 @@ jobs:
       run: |
         cd kernel
         VDSO_MK="arch/arm64/kernel/vdso/Makefile"
-        if [ -f "$VDSO_MK" ] && ! grep -q "fintegrated-as" "$VDSO_MK"; then
-            sed -i 's/^ccflags-y\s*:=/ccflags-y := -fintegrated-as/' "$VDSO_MK"
-            if ! grep -q "fintegrated-as" "$VDSO_MK"; then
-                sed -i '1s/^/ccflags-y += -fintegrated-as\n/' "$VDSO_MK"
-            fi
-            echo "Patched $VDSO_MK with -fintegrated-as"
-        fi
 
         # Fix gettimeofday.S: clang doesn't support named macro args (shift=1)
-        # Replace all occurrences of "macro_name, shift=N" -> "macro_name, N"
         GTOD="arch/arm64/kernel/vdso/gettimeofday.S"
         if [ -f "$GTOD" ]; then
-            sed -i 's/clock_gettime_return, shift=\([0-9]*\)/clock_gettime_return, \1/g' "$GTOD"
-            # Generic fallback for any other named args in macros
             sed -i 's/\bshift=\([0-9]*\)/\1/g' "$GTOD"
             echo "Patched $GTOD: replaced named macro args"
         fi
 
-        # Fix note.S: clang rejects @note section type, use numeric 0x7 instead
+        # Fix note.S: clang rejects @note section type
         NOTE="arch/arm64/kernel/vdso/note.S"
         if [ -f "$NOTE" ]; then
-            # Replace "",@note with "a" (allocatable) - acceptable for clang
             sed -i 's/\.pushsection \.note\.Linux, "",@note/.pushsection .note.Linux, "a"/g' "$NOTE"
             sed -i 's/\.section \.note\.Linux,"",@note/.section .note.Linux,"a"/g' "$NOTE"
             echo "Patched $NOTE: fixed section flags"
+        fi
+
+        # The key fix: patch cmd_vdsoas to add -fintegrated-as directly in the build command
+        # ccflags-y doesn't apply to .S files - they use a_flags via cmd_vdsoas
+        if [ -f "$VDSO_MK" ]; then
+            sed -i 's|cmd_vdsoas = $(CC) $(a_flags) -c -o $@ $<|cmd_vdsoas = $(CC) $(a_flags) -fintegrated-as -c -o $@ $<|' "$VDSO_MK"
+            echo "Patched $VDSO_MK: added -fintegrated-as to cmd_vdsoas"
+            grep "cmd_vdsoas" "$VDSO_MK"
         fi
 
         echo "VDSO patches done"
