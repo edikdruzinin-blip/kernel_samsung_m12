@@ -11,7 +11,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update -y
-        sudo apt-get install -y git bc bison flex libssl-dev make libc6-dev libncurses5-dev crossbuild-essential-arm64 python3 zip unzip libelf-dev gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu ccache
+        sudo apt-get install -y git bc bison flex libssl-dev make libc6-dev libncurses5-dev crossbuild-essential-arm64 python3 zip unzip libelf-dev gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu ccache clang lld llvm
 
     - name: Set up ccache
       uses: actions/cache@v4
@@ -224,12 +224,12 @@ jobs:
         scripts/config --set-str CONFIG_EXTRA_FIRMWARE_DIR ""
         scripts/config --disable CONFIG_EXYNOS_BTS
         # Resolve any dependency changes
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=clang CLANG_TRIPLE=aarch64-linux-gnu- olddefconfig
         # Fix: ensure EXTRA_FIRMWARE is empty (physwizz config points to real paths)
         scripts/config --set-str CONFIG_EXTRA_FIRMWARE ""
         scripts/config --set-str CONFIG_EXTRA_FIRMWARE_DIR ""
         # Re-run to apply the firmware config changes
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=clang CLANG_TRIPLE=aarch64-linux-gnu- olddefconfig
         # Verify
         echo "=== Config stats: $(grep -c '=y' .config) built-in, $(grep -c '=m' .config 2>/dev/null || echo 0) modules ==="
         grep -E "^CONFIG_(ARCH_EXYNOS|SOC_EXYNOS|MMC_DW|MALI_BIFROST|EXYNOS_DPU)=" .config | head -10
@@ -239,15 +239,15 @@ jobs:
         cd kernel
         # Собираем с сохранением полного лога
         # Build kernel Image
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache aarch64-linux-gnu-gcc" KCFLAGS="-w" -j$(nproc) Image 2>&1 | tee /tmp/full_build.log
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache clang" CLANG_TRIPLE=aarch64-linux-gnu- LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy KCFLAGS="-w" -j$(nproc) Image 2>&1 | tee /tmp/full_build.log
         BUILD_RESULT_IMG=${PIPESTATUS[0]}
 
         # Build kernel modules (.ko) — best-effort, partial failures from firmware deps are expected
         # -k: keep going past individual errors; || true: never fail this step
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache aarch64-linux-gnu-gcc" KCFLAGS="-w" -j$(nproc) -k modules 2>&1 | tee -a /tmp/full_build.log || true
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache clang" CLANG_TRIPLE=aarch64-linux-gnu- LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy KCFLAGS="-w" -j$(nproc) -k modules 2>&1 | tee -a /tmp/full_build.log || true
 
         # Install whatever modules did build (strip debug symbols) — also best-effort
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules_install INSTALL_MOD_PATH=../modules_staging INSTALL_MOD_STRIP=1 2>&1 || true
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache clang" CLANG_TRIPLE=aarch64-linux-gnu- LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy modules_install INSTALL_MOD_PATH=../modules_staging INSTALL_MOD_STRIP=1 2>&1 || true
 
         # Generate modules.dep / modules.alias / modules.softdep via depmod
         # These are required for proper modprobe dependency resolution on device
@@ -303,9 +303,7 @@ jobs:
 
     - name: Package kernel
       run: |
-        # Compress to Image.gz - required for magiskboot compatibility
-        gzip -9 -c kernel/arch/arm64/boot/Image > anykernel/Image.gz
-        echo "Image.gz size: $(ls -lh anykernel/Image.gz | awk '{print $5}')"
+        cp kernel/arch/arm64/boot/Image anykernel/
 
         # Copy modules into AnyKernel3 structure
         # do.modules=2 → AnyKernel installs modules/vendor/lib/modules/ → /vendor/lib/modules/
@@ -330,7 +328,7 @@ jobs:
             echo "No modules_staging directory found, skipping modules"
         fi
 
-        echo "a2VybmVsLnN0cmluZz1TTS1NMTI3RiBLZXJuZWxTVSBLZXJuZWwKZG8uZGV2aWNlY2hlY2s9MQpkby5tb2R1bGVzPTIKZG8uc3lzdGVtbGVzcz0xCmRvLmNsZWFudXA9MQpkby5jbGVhbnVwb25hYm9ydD0wCmRldmljZS5uYW1lMT1tMTIKZGV2aWNlLm5hbWUyPW0xMm5hY2hvCmRldmljZS5uYW1lMz1TTS1NMTI3RgpzdXBwb3J0ZWQudmVyc2lvbnM9MTEKCi4gdG9vbHMvYWszLWNvcmUuc2gKCmR1bXBfYm9vdDsKcGF0Y2hfY21kbGluZSAiYW5kcm9pZGJvb3Quc2VsaW51eCIgImFuZHJvaWRib290LnNlbGludXg9cGVybWlzc2l2ZSI7CnBhdGNoX2NtZGxpbmUgInNlbGludXgiICJzZWxpbnV4PTAiOwpwYXRjaF9jbWRsaW5lICJlbmZvcmNpbmciICJlbmZvcmNpbmc9MCI7CnBhdGNoX2NtZGxpbmUgInpyYW0ubnVtX2RldmljZXMiICJ6cmFtLm51bV9kZXZpY2VzPTEiOwp3cml0ZV9ib290Owo=" | base64 -d > anykernel/anykernel.sh
+        echo "IyBBbnlLZXJuZWwzIFJhbWRpc2sgTW9kIFNjcmlwdAojIFNNLU0xMjdGIEtlcm5lbFNVIEtlcm5lbAoKcHJvcGVydGllcygpIHsgJwprZXJuZWwuc3RyaW5nPVNNLU0xMjdGIEtlcm5lbFNVIEtlcm5lbApkby5kZXZpY2VjaGVjaz0wCmRvLm1vZHVsZXM9Mgpkby5zeXN0ZW1sZXNzPTEKZG8uY2xlYW51cD0xCmRvLmNsZWFudXBvbmFib3J0PTAKZGV2aWNlLm5hbWUxPW0xMgpkZXZpY2UubmFtZTI9bTEybmFjaG8KZGV2aWNlLm5hbWUzPVNNLU0xMjdGCmRldmljZS5uYW1lND1TTS1BMTI3RgpkZXZpY2UubmFtZTU9YTEycwpzdXBwb3J0ZWQudmVyc2lvbnM9MTEKJzsgfQoKYmxvY2s9L2Rldi9ibG9jay9wbGF0Zm9ybS8xMjEwMDAwMC5kd21tYzAvYnktbmFtZS9ib290Owppc19zbG90X2RldmljZT0wOwpyYW1kaXNrX2NvbXByZXNzaW9uPWF1dG87CgouIHRvb2xzL2FrMy1jb3JlLnNoOwoKZHVtcF9ib290OwpwYXRjaF9jbWRsaW5lICJhbmRyb2lkYm9vdC5zZWxpbnV4IiAiYW5kcm9pZGJvb3Quc2VsaW51eD1wZXJtaXNzaXZlIjsKcGF0Y2hfY21kbGluZSAic2VsaW51eCIgInNlbGludXg9MCI7CnBhdGNoX2NtZGxpbmUgImVuZm9yY2luZyIgImVuZm9yY2luZz0wIjsKcGF0Y2hfY21kbGluZSAienJhbS5udW1fZGV2aWNlcyIgInpyYW0ubnVtX2RldmljZXM9MSI7CndyaXRlX2Jvb3Q7Cg==" | base64 -d > anykernel/anykernel.sh
         cd anykernel && zip -r9 ../SM-M127F_KernelSU.zip . -x "*.git*" "*.github*" "*.md"
         ls -lh ../SM-M127F_KernelSU.zip
         echo "=== ZIP contents (modules) ==="
