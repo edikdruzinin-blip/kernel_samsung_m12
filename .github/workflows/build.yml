@@ -303,7 +303,9 @@ jobs:
 
     - name: Package kernel
       run: |
-        cp kernel/arch/arm64/boot/Image anykernel/
+        # Compress to Image.gz - required for magiskboot compatibility
+        gzip -9 -c kernel/arch/arm64/boot/Image > anykernel/Image.gz
+        echo "Image.gz size: $(ls -lh anykernel/Image.gz | awk '{print $5}')"
 
         # Copy modules into AnyKernel3 structure
         # do.modules=2 → AnyKernel installs modules/vendor/lib/modules/ → /vendor/lib/modules/
