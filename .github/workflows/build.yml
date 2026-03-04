@@ -210,6 +210,32 @@ jobs:
 
         echo "KernelSU compat fixes done"
 
+    - name: Patch VDSO for clang cross-compilation
+      run: |
+        cd kernel
+        # VDSO Makefile in 4.19 passes .S files to clang which then calls /usr/bin/as (x86)
+        # Fix: force -fintegrated-as so clang uses its own ARM64 assembler
+        VDSO_MK="arch/arm64/kernel/vdso/Makefile"
+        if [ -f "$VDSO_MK" ]; then
+            # Add -fintegrated-as to VDSO C flags
+            if ! grep -q "fintegrated-as" "$VDSO_MK"; then
+                sed -i 's/^ccflags-y\s*:=/ccflags-y := -fintegrated-as/; t; s/^ccflags-y\s*+=/ccflags-y += -fintegrated-as/' "$VDSO_MK"
+                # If ccflags-y line doesn't exist, add it
+                if ! grep -q "ccflags-y" "$VDSO_MK"; then
+                    sed -i '1s/^/ccflags-y += -fintegrated-as\naflags-y += -fintegrated-as\n/' "$VDSO_MK"
+                fi
+                # Also patch aflags/asflags
+                sed -i 's/^aflags-y\s*:=/aflags-y := -fintegrated-as/; t; s/^aflags-y\s*+=/aflags-y += -fintegrated-as/' "$VDSO_MK"
+                echo "Patched $VDSO_MK with -fintegrated-as"
+            fi
+            echo "=== VDSO Makefile ==="
+            cat "$VDSO_MK"
+        else
+            echo "VDSO Makefile not found at $VDSO_MK"
+        fi
+        # Also patch arch/arm64/Makefile to add -fintegrated-as globally for clang
+        sed -i '/^KBUILD_CFLAGS\s*+=/i KBUILD_CFLAGS += -fintegrated-as\nKBUILD_AFLAGS += -fintegrated-as' arch/arm64/Makefile 2>/dev/null | head -1 || true
+
     - name: Configure kernel (using physwizz base config)
       run: |
         cd kernel
