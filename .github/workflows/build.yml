@@ -222,6 +222,10 @@ jobs:
         if [ -f "$VDSO_MK" ]; then
             sed -i 's|cmd_vdsoas = $(CC) $(a_flags) -c -o $@ $<|cmd_vdsoas = $(CC) $(a_flags) -fintegrated-as -c -o $@ $<|' "$VDSO_MK"
             echo "Patched $VDSO_MK: added -fintegrated-as to cmd_vdsoas"
+            # Patch cmd_vdsold: /usr/bin/ld is x86-only, force lld for ARM64 VDSO linking
+            sed -i 's|cmd_vdsold = $(CC) $(c_flags) -Wl,-n -Wl,-T $^ -o $@|cmd_vdsold = $(CC) $(c_flags) -fuse-ld=lld -Wl,-n -Wl,-T $^ -o $@|' "$VDSO_MK"
+            echo "Patched $VDSO_MK: added -fuse-ld=lld to cmd_vdsold"
+            grep "cmd_vdso" "$VDSO_MK"
         fi
 
         echo "VDSO patches done"
