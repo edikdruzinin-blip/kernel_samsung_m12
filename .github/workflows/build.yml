@@ -307,13 +307,14 @@ jobs:
       run: git clone --depth=1 https://github.com/osm0sis/AnyKernel3 anykernel
 
     - name: Download physwizz tools (Spectrum/ZRAM)
+      continue-on-error: true
       run: |
-        curl -L "https://github.com/physwizz/M127F-T-u3/releases/download/v5-clean/physwizz_m127f-u3-kernel-v5-clean.zip" -o physwizz.zip 2>/dev/null || \
-        curl -L "https://github.com/physwizz/M127F-T-u3/releases/latest/download/physwizz_m127f-u3-kernel-v5-clean.zip" -o physwizz.zip 2>/dev/null || \
-        echo "WARNING: Could not download physwizz zip - Spectrum/ZRAM tools will be missing"
-        if [ -f physwizz.zip ]; then
+        curl -L --max-time 30 "https://github.com/physwizz/M127F-T-u3/releases/download/v5-clean/physwizz_m127f-u3-kernel-v5-clean.zip" -o physwizz.zip || \
+        curl -L --max-time 30 "https://github.com/physwizz/M127F-T-u3/releases/latest/download/physwizz_m127f-u3-kernel-v5-clean.zip" -o physwizz.zip || \
+        { echo "WARNING: Could not download physwizz zip - Spectrum/ZRAM tools will be missing"; exit 0; }
+        if [ -f physwizz.zip ] && [ -s physwizz.zip ]; then
           mkdir -p physwizz_tools
-          unzip -j physwizz.zip "tools/init_spectrum.rc" "tools/init.spectrum.sh" "tools/init.zram.rc" "tools/30zram" -d physwizz_tools/ 2>/dev/null
+          unzip -j physwizz.zip "tools/init_spectrum.rc" "tools/init.spectrum.sh" "tools/init.zram.rc" "tools/30zram" -d physwizz_tools/ 2>/dev/null || true
           cp physwizz_tools/* anykernel/tools/ 2>/dev/null && echo "Physwizz tools copied OK" || echo "WARNING: Some physwizz tools missing"
         fi
 
@@ -344,7 +345,7 @@ jobs:
             echo "No modules_staging directory found, skipping modules"
         fi
 
-        echo "IyBBbnlLZXJuZWwzIFJhbWRpc2sgTW9kIFNjcmlwdAojIFNNLU0xMjdGIEtlcm5lbFNVIEtlcm5lbAoKcHJvcGVydGllcygpIHsgJwprZXJuZWwuc3RyaW5nPVNNLU0xMjdGIEtlcm5lbFNVIEtlcm5lbApkby5kZXZpY2VjaGVjaz0wCmRvLm1vZHVsZXM9Mgpkby5zeXN0ZW1sZXNzPTEKZG8uY2xlYW51cD0xCmRvLmNsZWFudXBvbmFib3J0PTAKZGV2aWNlLm5hbWUxPW0xMgpkZXZpY2UubmFtZTI9bTEybmFjaG8KZGV2aWNlLm5hbWUzPVNNLU0xMjdGCmRldmljZS5uYW1lND1TTS1BMTI3RgpkZXZpY2UubmFtZTU9YTEycwpzdXBwb3J0ZWQudmVyc2lvbnM9MTEKJzsgfQoKYmxvY2s9L2Rldi9ibG9jay9wbGF0Zm9ybS8xMjEwMDAwMC5kd21tYzAvYnktbmFtZS9ib290Owppc19zbG90X2RldmljZT0wOwpyYW1kaXNrX2NvbXByZXNzaW9uPWF1dG87CgouIHRvb2xzL2FrMy1jb3JlLnNoOwoKZHVtcF9ib290OwoKcGF0Y2hfY21kbGluZSAiYW5kcm9pZGJvb3Quc2VsaW51eCIgImFuZHJvaWRib290LnNlbGludXg9cGVybWlzc2l2ZSI7CnBhdGNoX2NtZGxpbmUgInNlbGludXgiICJzZWxpbnV4PTAiOwpwYXRjaF9jbWRsaW5lICJlbmZvcmNpbmciICJlbmZvcmNpbmc9MCI7CnBhdGNoX2NtZGxpbmUgInpyYW0ubnVtX2RldmljZXMiICJ6cmFtLm51bV9kZXZpY2VzPTQiOwpwYXRjaF9jbWRsaW5lICJhbmRyb2lkYm9vdC53YXJyYW50eV9iaXQiICJhbmRyb2lkYm9vdC53YXJyYW50eV9iaXQ9MCI7CnBhdGNoX2NtZGxpbmUgImFuZHJvaWRib290LmJvb3Rsb2NrIiAiYW5kcm9pZGJvb3QuYm9vdGxvY2s9MCI7Cgptb3VudCAvc3lzdGVtX3Jvb3QvIDI+L2Rldi9udWxsOwptb3VudCAvc3lzdGVtLyAyPi9kZXYvbnVsbDsKbW91bnQgLW8gcncscmVtb3VudCAvc3lzdGVtX3Jvb3QgMj4vZGV2L251bGw7Cm1vdW50IC1vIHJ3LHJlbW91bnQgL3N5c3RlbSAyPi9kZXYvbnVsbDsKCnVpX3ByaW50ICItIEluc3RhbGxpbmcgU3BlY3RydW0iOwpjcCAtZiAkQUtIT01FL3Rvb2xzL2luaXRfc3BlY3RydW0ucmMgL3N5c3RlbV9yb290L2luaXQuc3BlY3RydW0ucmMgMj4vZGV2L251bGw7CmNobW9kIDY0NCAvc3lzdGVtX3Jvb3QvaW5pdC5zcGVjdHJ1bS5yYyAyPi9kZXYvbnVsbDsKY3AgLWYgJEFLSE9NRS90b29scy9pbml0LnNwZWN0cnVtLnNoIC9zeXN0ZW1fcm9vdC9pbml0LnNwZWN0cnVtLnNoIDI+L2Rldi9udWxsOwpjaG1vZCA3NTUgL3N5c3RlbV9yb290L2luaXQuc3BlY3RydW0uc2ggMj4vZGV2L251bGw7Cmluc2VydF9saW5lIC9zeXN0ZW1fcm9vdC9zeXN0ZW0vZXRjL2luaXQvaHcvaW5pdC5yYyAiaW1wb3J0IC9pbml0LnNwZWN0cnVtLnJjIiBhZnRlciAiaW1wb3J0IC9wcmlzbS9ldGMvaW5pdC9pbml0LnJjIiAiaW1wb3J0IC9pbml0LnNwZWN0cnVtLnJjIiAyPi9kZXYvbnVsbDsKCnVpX3ByaW50ICItIEluc3RhbGxpbmcgWlJBTSI7CmNwIC1mICRBS0hPTUUvdG9vbHMvaW5pdC56cmFtLnJjIC9zeXN0ZW1fcm9vdC9pbml0LnpyYW0ucmMgMj4vZGV2L251bGw7CmNobW9kIDY0NCAvc3lzdGVtX3Jvb3QvaW5pdC56cmFtLnJjIDI+L2Rldi9udWxsOwppbnNlcnRfbGluZSAvc3lzdGVtX3Jvb3Qvc3lzdGVtL2V0Yy9pbml0L2h3L2luaXQucmMgImltcG9ydCAvaW5pdC56cmFtLnJjIiBhZnRlciAiaW1wb3J0IC9pbml0LnNwZWN0cnVtLnJjIiAiaW1wb3J0IC9pbml0LnpyYW0ucmMiIDI+L2Rldi9udWxsOwpta2RpciAtcCAvc3lzdGVtX3Jvb3Qvc3lzdGVtL2V0Yy9pbml0LmQgMj4vZGV2L251bGw7CmNwIC1mICRBS0hPTUUvdG9vbHMvMzB6cmFtIC9zeXN0ZW1fcm9vdC9zeXN0ZW0vZXRjL2luaXQuZC8zMHpyYW0gMj4vZGV2L251bGw7CmNobW9kIDc1NSAvc3lzdGVtX3Jvb3Qvc3lzdGVtL2V0Yy9pbml0LmQvMzB6cmFtIDI+L2Rldi9udWxsOwoKdW1vdW50IC9zeXN0ZW1fcm9vdCAyPi9kZXYvbnVsbDsKdW1vdW50IC9zeXN0ZW0gMj4vZGV2L251bGw7Cgp3cml0ZV9ib290Owo=" | base64 -d > anykernel/anykernel.sh
+        echo "IyBBbnlLZXJuZWwzIFJhbWRpc2sgTW9kIFNjcmlwdAojIFNNLU0xMjdGIEtlcm5lbFNVIEtlcm5lbAoKcHJvcGVydGllcygpIHsgJwprZXJuZWwuc3RyaW5nPVNNLU0xMjdGIEtlcm5lbFNVIEtlcm5lbApkby5kZXZpY2VjaGVjaz0wCmRvLm1vZHVsZXM9Mgpkby5zeXN0ZW1sZXNzPTEKZG8uY2xlYW51cD0xCmRvLmNsZWFudXBvbmFib3J0PTAKZGV2aWNlLm5hbWUxPW0xMgpkZXZpY2UubmFtZTI9bTEybmFjaG8KZGV2aWNlLm5hbWUzPVNNLU0xMjdGCmRldmljZS5uYW1lND1TTS1BMTI3RgpkZXZpY2UubmFtZTU9YTEycwpzdXBwb3J0ZWQudmVyc2lvbnM9MTEKJzsgfQoKYmxvY2s9L2Rldi9ibG9jay9wbGF0Zm9ybS8xMjEwMDAwMC5kd21tYzAvYnktbmFtZS9ib290Owppc19zbG90X2RldmljZT0wOwpyYW1kaXNrX2NvbXByZXNzaW9uPWF1dG87CgouIHRvb2xzL2FrMy1jb3JlLnNoOwoKZHVtcF9ib290OwoKcGF0Y2hfY21kbGluZSAiYW5kcm9pZGJvb3Quc2VsaW51eCIgImFuZHJvaWRib290LnNlbGludXg9cGVybWlzc2l2ZSI7CnBhdGNoX2NtZGxpbmUgInNlbGludXgiICJzZWxpbnV4PTAiOwpwYXRjaF9jbWRsaW5lICJlbmZvcmNpbmciICJlbmZvcmNpbmc9MCI7CnBhdGNoX2NtZGxpbmUgInpyYW0ubnVtX2RldmljZXMiICJ6cmFtLm51bV9kZXZpY2VzPTQiOwpwYXRjaF9jbWRsaW5lICJhbmRyb2lkYm9vdC53YXJyYW50eV9iaXQiICJhbmRyb2lkYm9vdC53YXJyYW50eV9iaXQ9MCI7CnBhdGNoX2NtZGxpbmUgImFuZHJvaWRib290LmJvb3Rsb2NrIiAiYW5kcm9pZGJvb3QuYm9vdGxvY2s9MCI7Cgp3cml0ZV9ib290Owo=" | base64 -d > anykernel/anykernel.sh
         cd anykernel && zip -r9 ../SM-M127F_KernelSU.zip . -x "*.git*" "*.github*" "*.md"
         ls -lh ../SM-M127F_KernelSU.zip
         echo "=== ZIP contents (modules) ==="
