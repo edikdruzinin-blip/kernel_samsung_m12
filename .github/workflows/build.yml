@@ -210,25 +210,6 @@ jobs:
 
         echo "KernelSU compat fixes done"
 
-    - name: Patch VDSO for clang cross-compilation
-      run: |
-        cd kernel
-
-        echo "aW1wb3J0IHJlLCBvcwoKZm5hbWUgPSAiYXJjaC9hcm02NC9rZXJuZWwvdmRzby9nZXR0aW1lb2ZkYXkuUyIKYyA9IG9wZW4oZm5hbWUpLnJlYWQoKQpjID0gcmUuc3ViKHInKFwubWFjcm9ccytjbG9ja19nZXR0aW1lX3JldHVyblxzKixccyopc2hpZnQ9KFxkKyknLCByJ1wxc2hpZnQnLCBjKQpjID0gcmUuc3ViKHInKGNsb2NrX2dldHRpbWVfcmV0dXJuKVxzKixccypzaGlmdD0oXGQrKScsIHInXDEgXDInLCBjKQpjID0gcmUuc3ViKHInXihccypjbG9ja19nZXR0aW1lX3JldHVybilccyokJywgcidcMSAwJywgYywgZmxhZ3M9cmUuTVVMVElMSU5FKQpvcGVuKGZuYW1lLCAidyIpLndyaXRlKGMpCnByaW50KCJQYXRjaGVkICIgKyBmbmFtZSkKCmZvciByb290LCBkaXJzLCBmaWxlcyBpbiBvcy53YWxrKCJpbmNsdWRlIik6CiAgICBmb3IgZiBpbiBmaWxlczoKICAgICAgICBpZiBmID09ICJlbGZub3RlLmgiOgogICAgICAgICAgICBwYXRoID0gb3MucGF0aC5qb2luKHJvb3QsIGYpCiAgICAgICAgICAgIGMgPSBvcGVuKHBhdGgpLnJlYWQoKQogICAgICAgICAgICBpZiAiQG5vdGUiIGluIGM6CiAgICAgICAgICAgICAgICBjID0gYy5yZXBsYWNlKCIsIEBub3RlIiwgIiIpCiAgICAgICAgICAgICAgICBjID0gYy5yZXBsYWNlKCIsQG5vdGUiLCAiIikKICAgICAgICAgICAgICAgIG9wZW4ocGF0aCwgInciKS53cml0ZShjKQogICAgICAgICAgICAgICAgcHJpbnQoIlBhdGNoZWQgIiArIHBhdGggKyAiOiByZW1vdmVkIEBub3RlIHNlY3Rpb24gdHlwZSIpCg==" | base64 -d > /tmp/patch_vdso.py
-        python3 /tmp/patch_vdso.py
-
-        # Patch cmd_vdsoas to use integrated assembler
-        VDSO_MK="arch/arm64/kernel/vdso/Makefile"
-        if [ -f "$VDSO_MK" ]; then
-            sed -i 's|cmd_vdsoas = $(CC) $(a_flags) -c -o $@ $<|cmd_vdsoas = $(CC) $(a_flags) -fintegrated-as -c -o $@ $<|' "$VDSO_MK"
-            echo "Patched $VDSO_MK: added -fintegrated-as to cmd_vdsoas"
-            # Patch cmd_vdsold: /usr/bin/ld is x86-only, force lld for ARM64 VDSO linking
-            sed -i 's|cmd_vdsold = $(CC) $(c_flags) -Wl,-n -Wl,-T $^ -o $@|cmd_vdsold = $(CC) $(c_flags) -fuse-ld=lld -Wl,-n -Wl,-T $^ -o $@|' "$VDSO_MK"
-            echo "Patched $VDSO_MK: added -fuse-ld=lld to cmd_vdsold"
-            grep "cmd_vdso" "$VDSO_MK"
-        fi
-
-        echo "VDSO patches done"
 
     - name: Configure kernel (using physwizz base config)
       run: |
@@ -244,12 +225,12 @@ jobs:
         scripts/config --set-str CONFIG_EXTRA_FIRMWARE_DIR ""
         scripts/config --disable CONFIG_EXYNOS_BTS
         # Resolve any dependency changes
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- AS=aarch64-linux-gnu-as CC="clang --target=aarch64-linux-gnu" CLANG_TRIPLE=aarch64-linux-gnu- KCFLAGS="-fintegrated-as" olddefconfig
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="aarch64-linux-gnu-gcc" olddefconfig
         # Fix: ensure EXTRA_FIRMWARE is empty (physwizz config points to real paths)
         scripts/config --set-str CONFIG_EXTRA_FIRMWARE ""
         scripts/config --set-str CONFIG_EXTRA_FIRMWARE_DIR ""
         # Re-run to apply the firmware config changes
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- AS=aarch64-linux-gnu-as CC="clang --target=aarch64-linux-gnu" CLANG_TRIPLE=aarch64-linux-gnu- KCFLAGS="-fintegrated-as" olddefconfig
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="aarch64-linux-gnu-gcc" olddefconfig
         # Verify
         echo "=== Config stats: $(grep -c '=y' .config) built-in, $(grep -c '=m' .config 2>/dev/null || echo 0) modules ==="
         grep -E "^CONFIG_(ARCH_EXYNOS|SOC_EXYNOS|MMC_DW|MALI_BIFROST|EXYNOS_DPU)=" .config | head -10
@@ -259,15 +240,15 @@ jobs:
         cd kernel
         # Собираем с сохранением полного лога
         # Build kernel Image
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- AS=aarch64-linux-gnu-as CC="ccache clang --target=aarch64-linux-gnu" CLANG_TRIPLE=aarch64-linux-gnu- LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy KCFLAGS="-w -fintegrated-as" KAFLAGS="-fintegrated-as" -j$(nproc) Image 2>&1 | tee /tmp/full_build.log
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache aarch64-linux-gnu-gcc" -j$(nproc) Image 2>&1 | tee /tmp/full_build.log
         BUILD_RESULT_IMG=${PIPESTATUS[0]}
 
         # Build kernel modules (.ko) — best-effort, partial failures from firmware deps are expected
         # -k: keep going past individual errors; || true: never fail this step
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- AS=aarch64-linux-gnu-as CC="ccache clang --target=aarch64-linux-gnu" CLANG_TRIPLE=aarch64-linux-gnu- LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy KCFLAGS="-w -fintegrated-as" KAFLAGS="-fintegrated-as" -j$(nproc) -k modules 2>&1 | tee -a /tmp/full_build.log || true
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache aarch64-linux-gnu-gcc" -j$(nproc) -k modules 2>&1 | tee -a /tmp/full_build.log || true
 
         # Install whatever modules did build (strip debug symbols) — also best-effort
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- AS=aarch64-linux-gnu-as CC="ccache clang --target=aarch64-linux-gnu" CLANG_TRIPLE=aarch64-linux-gnu- LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy modules_install INSTALL_MOD_PATH=../modules_staging INSTALL_MOD_STRIP=1 2>&1 || true
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache aarch64-linux-gnu-gcc" modules_install INSTALL_MOD_PATH=../modules_staging INSTALL_MOD_STRIP=1 2>&1 || true
 
         # Generate modules.dep / modules.alias / modules.softdep via depmod
         # These are required for proper modprobe dependency resolution on device
