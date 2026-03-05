@@ -295,12 +295,16 @@ jobs:
         echo "=== END LINKER ERRORS ==="
 
         echo "=== COMPILER ERRORS ==="
-        grep -E "error:" /tmp/full_build.log | grep -v "^Binary" | head -40 || echo "No compiler errors"
+        grep -E "error:" /tmp/full_build.log | grep -v "^Binary" | head -60 || echo "No compiler errors"
         echo "=== END COMPILER ERRORS ==="
 
-        echo "=== LAST 80 LINES ==="
-        tail -80 /tmp/full_build.log
-        echo "=== END LAST 80 LINES ==="
+        echo "=== FIRST 40 ERRORS IN LOG ==="
+        grep -n "error:\|Error \|unrecognized option" /tmp/full_build.log | grep -v "objdump\|^Binary" | head -40 || true
+        echo "=== END FIRST ERRORS ==="
+
+        echo "=== LAST 100 LINES ==="
+        tail -100 /tmp/full_build.log
+        echo "=== END LAST 100 LINES ==="
 
         if [ $BUILD_RESULT -ne 0 ]; then
             exit $BUILD_RESULT
