@@ -32,23 +32,25 @@ jobs:
 
     - name: Fix ARM64 assembler wrapper for Clang cross-compile
       run: |
-        # Clang with LLVM_IAS=0 calls /usr/bin/as by FULL PATH (bypasses PATH).
-        # We REPLACE /usr/bin/as with a smart wrapper that routes by arch flag:
-        #   -EL / -EB  → ARM64  (aarch64-linux-gnu-as)
-        #   --64       → x86_64 (/usr/bin/as.x86_64 = original)
-        #   default    → x86_64 (host tools: fixdep, genksyms, etc.)
+        # Clang with LLVM_IAS=0 calls /usr/bin/as and /usr/bin/ld by FULL PATH.
+        # We REPLACE both with smart wrappers that route by arch flag.
 
+        # --- as wrapper: -EL/-EB → aarch64, --64/default → x86_64 ---
         sudo cp /usr/bin/as /usr/bin/as.x86_64
-
         printf '#!/bin/bash\nfor arg in "$@"; do\n  case "$arg" in\n    -EL|-EB)\n      exec /usr/bin/aarch64-linux-gnu-as "$@"\n      ;;\n    --64)\n      exec /usr/bin/as.x86_64 "$@"\n      ;;\n  esac\ndone\nexec /usr/bin/as.x86_64 "$@"\n' | sudo tee /usr/bin/as > /dev/null
-
         sudo chmod +x /usr/bin/as
-        echo "=== /usr/bin/as wrapper installed ==="
-        head -3 /usr/bin/as
-        echo "=== ARM64 assembler ==="
+
+        # --- ld wrapper: -m aarch64linux → aarch64-linux-gnu-ld, else x86_64 ---
+        sudo cp /usr/bin/ld /usr/bin/ld.x86_64
+        printf '#!/bin/bash\nfor arg in "$@"; do\n  if [ "$arg" = "aarch64linux" ] || [ "$arg" = "aarch64elf" ] || [ "$arg" = "aarch64_elf64_le_vec" ]; then\n    exec /usr/bin/aarch64-linux-gnu-ld "$@"\n  fi\ndone\nexec /usr/bin/ld.x86_64 "$@"\n' | sudo tee /usr/bin/ld > /dev/null
+        sudo chmod +x /usr/bin/ld
+
+        echo "=== Wrappers installed ==="
+        head -2 /usr/bin/as
+        head -2 /usr/bin/ld
+        echo "=== ARM64 tools ==="
         /usr/bin/aarch64-linux-gnu-as --version | head -1
-        echo "=== x86_64 backup ==="
-        /usr/bin/as.x86_64 --version | head -1
+        /usr/bin/aarch64-linux-gnu-ld --version | head -1
 
     - name: Clone kernel source
       run: |
@@ -245,12 +247,12 @@ jobs:
         scripts/config --set-str CONFIG_EXTRA_FIRMWARE_DIR ""
         scripts/config --disable CONFIG_EXYNOS_BTS
         # Resolve any dependency changes
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=clang CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as olddefconfig
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=clang CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld olddefconfig
         # Fix: ensure EXTRA_FIRMWARE is empty (physwizz config points to real paths)
         scripts/config --set-str CONFIG_EXTRA_FIRMWARE ""
         scripts/config --set-str CONFIG_EXTRA_FIRMWARE_DIR ""
         # Re-run to apply the firmware config changes
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=clang CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as olddefconfig
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=clang CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld olddefconfig
         # Verify
         echo "=== Config stats: $(grep -c '=y' .config) built-in, $(grep -c '=m' .config 2>/dev/null || echo 0) modules ==="
         grep -E "^CONFIG_(ARCH_EXYNOS|SOC_EXYNOS|MMC_DW|MALI_BIFROST|EXYNOS_DPU)=" .config | head -10
@@ -260,15 +262,15 @@ jobs:
         cd kernel
         # Собираем с сохранением полного лога
         # Build kernel Image
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as KCFLAGS="-w -Wno-error" -j$(nproc) Image 2>&1 | tee /tmp/full_build.log
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld KCFLAGS="-w -Wno-error" -j$(nproc) Image 2>&1 | tee /tmp/full_build.log
         BUILD_RESULT_IMG=${PIPESTATUS[0]}
 
         # Build kernel modules (.ko) — best-effort, partial failures from firmware deps are expected
         # -k: keep going past individual errors; || true: never fail this step
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as KCFLAGS="-w -Wno-error" -j$(nproc) -k modules 2>&1 | tee -a /tmp/full_build.log || true
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld KCFLAGS="-w -Wno-error" -j$(nproc) -k modules 2>&1 | tee -a /tmp/full_build.log || true
 
         # Install whatever modules did build (strip debug symbols) — also best-effort
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as modules_install INSTALL_MOD_PATH=../modules_staging INSTALL_MOD_STRIP=1 2>&1 || true
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld modules_install INSTALL_MOD_PATH=../modules_staging INSTALL_MOD_STRIP=1 2>&1 || true
 
         # Generate modules.dep / modules.alias / modules.softdep via depmod
         # These are required for proper modprobe dependency resolution on device
