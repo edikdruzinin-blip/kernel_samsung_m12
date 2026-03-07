@@ -30,6 +30,22 @@ jobs:
         echo "ccache configured, cache dir: $HOME/.ccache"
         ccache --show-stats
 
+    - name: Fix ARM64 toolchain symlinks for Clang cross-compile
+      run: |
+        # With LLVM_IAS=0, clang invokes bare tool names (as, ar, nm, etc.)
+        # /usr/bin/* defaults are x86 — redirect ALL to aarch64-linux-gnu-* versions.
+        for tool in as ar nm objcopy objdump ranlib readelf strip ld; do
+          if command -v aarch64-linux-gnu-$tool &>/dev/null; then
+            sudo ln -sf $(which aarch64-linux-gnu-$tool) /usr/local/bin/$tool
+            echo "$tool -> $(readlink -f /usr/local/bin/$tool)"
+          else
+            echo "WARNING: aarch64-linux-gnu-$tool not found, skipping"
+          fi
+        done
+        echo "=== Toolchain check ==="
+        as --version | head -1
+        ld --version | head -1
+
     - name: Clone kernel source
       run: |
         git clone --depth=1 https://github.com/maazm7d/kernel_samsung_m12 kernel
