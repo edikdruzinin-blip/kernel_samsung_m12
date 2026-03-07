@@ -40,20 +40,7 @@ jobs:
 
         sudo cp /usr/bin/as /usr/bin/as.x86_64
 
-        sudo tee /usr/bin/as > /dev/null << 'WRAPPER'
-#!/bin/bash
-for arg in "$@"; do
-  case "$arg" in
-    -EL|-EB)
-      exec /usr/bin/aarch64-linux-gnu-as "$@"
-      ;;
-    --64)
-      exec /usr/bin/as.x86_64 "$@"
-      ;;
-  esac
-done
-exec /usr/bin/as.x86_64 "$@"
-WRAPPER
+        printf '#!/bin/bash\nfor arg in "$@"; do\n  case "$arg" in\n    -EL|-EB)\n      exec /usr/bin/aarch64-linux-gnu-as "$@"\n      ;;\n    --64)\n      exec /usr/bin/as.x86_64 "$@"\n      ;;\n  esac\ndone\nexec /usr/bin/as.x86_64 "$@"\n' | sudo tee /usr/bin/as > /dev/null
 
         sudo chmod +x /usr/bin/as
         echo "=== /usr/bin/as wrapper installed ==="
