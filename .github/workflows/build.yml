@@ -30,21 +30,41 @@ jobs:
         echo "ccache configured, cache dir: $HOME/.ccache"
         ccache --show-stats
 
-    - name: Fix ARM64 toolchain symlinks for Clang cross-compile
+    - name: Fix ARM64 assembler wrapper for Clang cross-compile
       run: |
-        # With LLVM_IAS=0, clang invokes bare tool names (as, ar, nm, etc.)
-        # /usr/bin/* defaults are x86 — redirect ALL to aarch64-linux-gnu-* versions.
-        for tool in as ar nm objcopy objdump ranlib readelf strip ld; do
-          if command -v aarch64-linux-gnu-$tool &>/dev/null; then
-            sudo ln -sf $(which aarch64-linux-gnu-$tool) /usr/local/bin/$tool
-            echo "$tool -> $(readlink -f /usr/local/bin/$tool)"
-          else
-            echo "WARNING: aarch64-linux-gnu-$tool not found, skipping"
-          fi
+        # Problem: clang with LLVM_IAS=0 calls bare 'as' from PATH.
+        # /usr/bin/as is x86 and doesn't know ARM64 flag -EL → build fails.
+        # BUT: host tools (fixdep, etc.) compiled with gcc also call bare 'as'
+        # and need x86 assembler (flag --64) → can't just symlink to aarch64.
+        #
+        # Solution: smart wrapper that routes by architecture flag:
+        #   -EL / -EB  → ARM64 (aarch64-linux-gnu-as)
+        #   --64       → x86_64 (/usr/bin/x86_64-linux-gnu-as or original /usr/bin/as)
+        #   default    → x86_64 (host tools)
+
+        cat > /tmp/as-wrapper << 'WRAPPER'
+        #!/bin/bash
+        for arg in "$@"; do
+          case "$arg" in
+            -EL|-EB) exec /usr/bin/aarch64-linux-gnu-as "$@" ;;
+            --64)    exec /usr/bin/x86_64-linux-gnu-as  "$@" 2>/dev/null || exec /usr/bin/as.real "$@" ;;
+          esac
         done
-        echo "=== Toolchain check ==="
-        as --version | head -1
-        ld --version | head -1
+        # No arch flag: default to x86_64 host assembler
+        exec /usr/bin/x86_64-linux-gnu-as "$@" 2>/dev/null || exec /usr/bin/as.real "$@"
+        WRAPPER
+
+        chmod +x /tmp/as-wrapper
+        # Backup original x86 'as' in case x86_64-linux-gnu-as is missing
+        sudo cp /usr/bin/as /usr/bin/as.real 2>/dev/null || true
+        sudo cp /tmp/as-wrapper /usr/local/bin/as
+
+        echo "=== Wrapper installed ==="
+        which as
+        echo "--- ARM64 test (should use aarch64 assembler) ---"
+        /usr/bin/aarch64-linux-gnu-as --version | head -1
+        echo "--- x86_64 assembler ---"
+        /usr/bin/x86_64-linux-gnu-as --version 2>/dev/null | head -1 || echo "(x86_64-linux-gnu-as not found, will use /usr/bin/as.real)"
 
     - name: Clone kernel source
       run: |
