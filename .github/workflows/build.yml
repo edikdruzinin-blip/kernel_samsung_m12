@@ -133,6 +133,8 @@ jobs:
     - name: Apply KernelSU patch
       run: |
         echo "KernelSU disabled for vanilla boot test"
+        # Remove kernelsu Kconfig reference so kconfig doesn't fail trying to open it
+        sed -i '/kernelsu\/Kconfig/d' kernel/drivers/Kconfig || true
 
     - name: Write kernel config b64 part 1
       run: |
