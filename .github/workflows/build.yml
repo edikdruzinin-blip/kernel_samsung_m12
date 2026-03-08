@@ -169,7 +169,7 @@ jobs:
 
         # --- Fix app_profile.c after selinux removal ---
         if [ -f drivers/kernelsu/app_profile.c ]; then
-            sed -i 's/setup_selinux(KERNEL_SU_CONTEXT, cred);/\/\/ setup_selinux(KERNEL_SU_CONTEXT, cred);\n    return true;/g' drivers/kernelsu/app_profile.c
+            sed -i 's/setup_selinux(KERNEL_SU_CONTEXT, cred);/\/\/ setup_selinux(KERNEL_SU_CONTEXT, cred);/g' drivers/kernelsu/app_profile.c
             echo "Patched app_profile.c: disabled selinux call"
         fi
 
