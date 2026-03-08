@@ -259,7 +259,11 @@ jobs:
         scripts/config --disable CONFIG_LOCALVERSION_AUTO
         scripts/config --set-str CONFIG_EXTRA_FIRMWARE ""
         scripts/config --set-str CONFIG_EXTRA_FIRMWARE_DIR ""
-        scripts/config --disable CONFIG_EXYNOS_BTS
+        # KASLR: disable because Samsung Exynos bootloader may not provide
+        # a proper memory map → KASLR picks wrong load address → instant crash
+        # before ramoops/SEC_DEBUG can write anything (explains empty last_kmsg)
+        scripts/config --disable CONFIG_RANDOMIZE_BASE
+        # Keep EXYNOS_BTS enabled (it's =y in physwizz config, we were wrong to disable it)
         # Resolve any dependency changes
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=${{ env.CLANG_PATH }}/clang CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld olddefconfig
         # Fix: ensure EXTRA_FIRMWARE is empty (physwizz config points to real paths)
