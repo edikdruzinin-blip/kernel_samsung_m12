@@ -222,6 +222,9 @@ jobs:
                 echo 'ccflags-y += -include $(srctree)/drivers/kernelsu/compat_419.h' >> drivers/kernelsu/Makefile
                 echo "Patched kernelsu Makefile: added force-include for compat_419.h"
             fi
+            # Suppress clang-14 K&R style function declaration error
+            echo 'ccflags-y += -Wno-deprecated-non-prototype' >> drivers/kernelsu/Makefile
+            echo "Patched kernelsu Makefile: suppressed deprecated-non-prototype"
         fi
         # Also patch Kbuild if it exists
         if [ -f drivers/kernelsu/Kbuild ]; then
