@@ -68,6 +68,12 @@ jobs:
         sed -i 's/panic("fail to freeze tasks: %s", secdbg_exin_get_unfz());/panic("fail to freeze tasks");/' kernel/power/process.c
         sed -i 's/if (sb->s_magic == F2FS_SUPER_MAGIC)/if (sb->s_magic == 0xF2F52010UL)/' fs/super.c
 
+        # Fix stpcpy: Samsung camera driver uses stpcpy (libc) which doesn't exist in kernel.
+        # Replace with strcpy — semantically equivalent here (stpcpy returns end ptr, but retval unused).
+        find drivers/media/platform/exynos/camera -name "*.c" -exec \
+            sed -i 's/stpcpy(\([^,]*\),\([^)]*\))/strcpy(\1,\2)/g' {} \; 2>/dev/null || true
+        echo "Fixed stpcpy → strcpy in camera driver"
+
         # Fix sensorhub firmware: disable it if no firmware dir
         if grep -r "shub_nacho_bl" firmware/Makefile 2>/dev/null; then
             sed -i '/shub_nacho/d' firmware/Makefile
