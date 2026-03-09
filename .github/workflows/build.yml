@@ -102,6 +102,14 @@ jobs:
         sed -i 's/^obj-y/#obj-y/' firmware/Makefile 2>/dev/null || true
         sed -i 's/^subdir-y/#subdir-y/' firmware/Makefile 2>/dev/null || true
         find drivers/kernelsu -name "*.c" 2>/dev/null |           xargs grep -l "TWA_RESUME" 2>/dev/null |           xargs sed -i 's/TWA_RESUME/TWA_NOTIFY/g' 2>/dev/null || true
+        # Disable broken camera vendor code (mcd_v2 has missing sensor headers in OSS source)
+        # This removes GC5035/sensor OTP code that references undefined symbols
+        # The base PABLO ISP camera still works without vendor/mcd_v2
+        find drivers/media/platform/exynos/camera/vendor -name "Makefile"           -exec sed -i '/mcd_v2/d' {} \; 2>/dev/null || true
+        # Also stub the is-sec-define.c if it's compiled directly
+        if [ -f drivers/media/platform/exynos/camera/vendor/mcd_v2/is-sec-define.c ]; then
+          echo "/* stubbed - missing sensor headers in OSS source */"             > drivers/media/platform/exynos/camera/vendor/mcd_v2/is-sec-define.c
+        fi
         echo "Samsung build fixes applied"
 
     - name: Apply KernelSU patch
