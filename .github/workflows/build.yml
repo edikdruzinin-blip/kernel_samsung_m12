@@ -136,6 +136,10 @@ jobs:
         # Ensure firmware paths are empty (no local firmware on CI)
         scripts/config --set-str CONFIG_EXTRA_FIRMWARE ""
         scripts/config --set-str CONFIG_EXTRA_FIRMWARE_DIR ""
+        # Disable drivers that require missing Samsung-specific headers
+        # ifconn_manager.c needs linux/muic/muic.h which is absent in maazm7d OSS source
+        scripts/config --disable CONFIG_IFCONN_MANAGER
+        scripts/config --disable CONFIG_MUIC_NOTIFIER 2>/dev/null || true
         # Resolve dependencies
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=${{ env.CLANG_PATH }}/clang CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld olddefconfig
         echo "=== Config stats: $(grep -c '=y' .config) built-in ==="
