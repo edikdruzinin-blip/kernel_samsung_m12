@@ -112,6 +112,8 @@ jobs:
         fi
         # Fix sec_param.c:238: CM_OFFSET=0 == FMM_LOCK_OFFSET=0 -> duplicate switch case
         echo "CmltcG9ydCByZSwgc3lzCmYgPSAnZHJpdmVycy9zYW1zdW5nL3NlY19wYXJhbS5jJwpzcmMgPSBvcGVuKGYpLnJlYWQoKQojIENvbW1lbnQgb3V0IHRoZSBkdXBsaWNhdGUgY2FzZSBsaW5lCnBhdGNoZWQgPSBzcmMucmVwbGFjZSgKICAgICdjYXNlIENNX09GRlNFVCAuLi4gQ01fT0ZGU0VUX0xJTUlUOicsCiAgICAnY2FzZSAweERFQUQgLi4uIDB4REVBRjogLyogQ01fT0ZGU0VUIGRpc2FibGVkOiBzYW1lIHZhbHVlIGFzIEZNTV9MT0NLX09GRlNFVCAqLycKKQppZiBwYXRjaGVkID09IHNyYzoKICAgIHByaW50KCdXQVJOSU5HOiBwYXR0ZXJuIG5vdCBmb3VuZCBpbiBzZWNfcGFyYW0uYycsIGZpbGU9c3lzLnN0ZGVycikKICAgICMgU2hvdyBsaW5lcyBhcm91bmQgMjM4CiAgICBmb3IgaSxsIGluIGVudW1lcmF0ZShzcmMuc3BsaXRsaW5lcygpWzIzMzoyNDNdLCAyMzQpOgogICAgICAgIHByaW50KGYnICBMe2l9OiB7cmVwcihsKX0nLCBmaWxlPXN5cy5zdGRlcnIpCmVsc2U6CiAgICBvcGVuKGYsJ3cnKS53cml0ZShwYXRjaGVkKQogICAgcHJpbnQoJ3NlY19wYXJhbS5jIHBhdGNoZWQgT0snKQo=" | base64 -d | python3
+        # Fix shub_iio.c: missing #include <linux/iio/buffer.h> (struct iio_buffer incomplete)
+        echo "CmltcG9ydCBvcwpmID0gJ2RyaXZlcnMvc2Vuc29yaHViL2NvbW0vc2h1Yl9paW8uYycKaWYgb3MucGF0aC5leGlzdHMoZik6CiAgICBzcmMgPSBvcGVuKGYpLnJlYWQoKQogICAgIyBBZGQgbWlzc2luZyBpaW8vYnVmZmVyLmggaW5jbHVkZSBhZnRlciB0aGUgbGFzdCAjaW5jbHVkZSBsaW5lCiAgICBpZiAnI2luY2x1ZGUgPGxpbnV4L2lpby9idWZmZXIuaD4nIG5vdCBpbiBzcmM6CiAgICAgICAgaW1wb3J0IHJlCiAgICAgICAgcGF0Y2hlZCA9IHJlLnN1YigKICAgICAgICAgICAgcicoI2luY2x1ZGUgPGxpbnV4L2lpby9bXgpdKwopJywKICAgICAgICAgICAgcidcMSNpbmNsdWRlIDxsaW51eC9paW8vYnVmZmVyLmg+XG4nLAogICAgICAgICAgICBzcmMsIGNvdW50PTEKICAgICAgICApCiAgICAgICAgaWYgcGF0Y2hlZCAhPSBzcmM6CiAgICAgICAgICAgIG9wZW4oZiwndycpLndyaXRlKHBhdGNoZWQpCiAgICAgICAgICAgIHByaW50KCdzaHViX2lpby5jOiBhZGRlZCBpaW8vYnVmZmVyLmggaW5jbHVkZScpCiAgICAgICAgZWxzZToKICAgICAgICAgICAgIyBGYWxsYmFjazogYWRkIGFmdGVyIGZpcnN0ICNpbmNsdWRlCiAgICAgICAgICAgIHBhdGNoZWQgPSBzcmMucmVwbGFjZSgnI2luY2x1ZGUgJywgJyNpbmNsdWRlIDxsaW51eC9paW8vYnVmZmVyLmg+XG4jaW5jbHVkZSAnLCAxKQogICAgICAgICAgICBvcGVuKGYsJ3cnKS53cml0ZShwYXRjaGVkKQogICAgICAgICAgICBwcmludCgnc2h1Yl9paW8uYzogYWRkZWQgaWlvL2J1ZmZlci5oIGluY2x1ZGUgKGZhbGxiYWNrKScpCiAgICBlbHNlOgogICAgICAgIHByaW50KCdzaHViX2lpby5jOiBhbHJlYWR5IGhhcyBpaW8vYnVmZmVyLmgnKQplbHNlOgogICAgcHJpbnQoZidub3QgZm91bmQ6IHtmfScpCg==" | base64 -d | python3
         echo "Samsung build fixes applied"
 
     - name: Apply KernelSU patch
@@ -146,10 +148,12 @@ jobs:
         # Ensure firmware paths are empty (no local firmware on CI)
         scripts/config --set-str CONFIG_EXTRA_FIRMWARE ""
         scripts/config --set-str CONFIG_EXTRA_FIRMWARE_DIR ""
-        # Disable drivers that require missing Samsung-specific headers
-        # ifconn_manager.c needs linux/muic/muic.h which is absent in maazm7d OSS source
-        scripts/config --disable CONFIG_IFCONN_MANAGER
+        # Disable drivers with broken/incomplete code in OSS source
+        scripts/config --disable CONFIG_IFCONN_MANAGER        # needs muic/muic.h
         scripts/config --disable CONFIG_MUIC_NOTIFIER 2>/dev/null || true
+        scripts/config --disable CONFIG_SENSORS_SSP 2>/dev/null || true    # sensorhub IIO
+        scripts/config --disable CONFIG_SHUB 2>/dev/null || true           # sensorhub
+        scripts/config --disable CONFIG_SHUB_IIO 2>/dev/null || true
         # Resolve dependencies
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=${{ env.CLANG_PATH }}/clang CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld olddefconfig
         echo "=== Config stats: $(grep -c '=y' .config) built-in ==="
