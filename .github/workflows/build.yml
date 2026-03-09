@@ -110,6 +110,11 @@ jobs:
         if [ -f drivers/media/platform/exynos/camera/vendor/mcd_v2/is-sec-define.c ]; then
           echo "/* stubbed - missing sensor headers in OSS source */"             > drivers/media/platform/exynos/camera/vendor/mcd_v2/is-sec-define.c
         fi
+        # Fix sec_param.c: CM_OFFSET and FMM_LOCK_OFFSET both resolve to 0
+        # causing "duplicate case value" in switch statement.
+        # Solution: set CM_OFFSET to a unique non-zero value via Kconfig.
+        # The actual value doesn't matter for our vanilla boot test.
+        scripts/config --set-val CONFIG_CM_OFFSET 8 2>/dev/null || true
         echo "Samsung build fixes applied"
 
     - name: Apply KernelSU patch
