@@ -83,25 +83,26 @@ jobs:
 
     - name: Clone kernel source
       run: |
-        # Use physwizz patched kernel - known to boot on M127F
-        # maazm7d source + physwizz config = mismatch, always bootloops
-        git clone --depth=1 -b android11-5.4 https://github.com/physwizz/M127F-S-u1 kernel \
-          || git clone --depth=1 https://github.com/physwizz/M127F-S-u1 kernel
+        git clone --depth=1 https://github.com/maazm7d/kernel_samsung_m12 kernel
         cd kernel && echo "Commit: $(git log --oneline -1)"
+        echo "Available defconfigs for this device:"
+        ls kernel/arch/arm64/configs/ | grep -i "m12\|exynos3830\|nacho\|a12\|a127" ||           ls kernel/arch/arm64/configs/ | grep exynos | head -10
 
     - name: Fix Mali GPU Kconfig
       run: |
-        # physwizz source has correct Mali Kconfig already - skip this fix
-        echo "Using physwizz source - Mali Kconfig fix not needed"
+        echo "Y29uZmlnIE1BTElfRERLX1ZFUlNJT04KCWJvb2wgIkVuYWJsZSBNQUxJIERESyBWZXJzaW9uIFNlbGVjdGlvbiIKCWRlZmF1bHQgeQoKaWYgTUFMSV9EREtfVkVSU0lPTgpjaG9pY2UKCXByb21wdCAidmVyc2lvbiBDb25maWd1cmF0aW9uIgoJZGVwZW5kcyBvbiBNQUxJX0RES19WRVJTSU9OCglkZWZhdWx0IE1BTElfQklGUk9TVF9SMjZQMAoJaGVscAoJICBTZWxlY3QgdGhlIGdwdSBzdXBwb3J0IHZlcnNpb24uCmNvbmZpZyBNQUxJX0JJRlJPU1RfUjE5UDAKCWRlcGVuZHMgb24gTUFMSV9EREtfVkVSU0lPTgoJYm9vbCAiQmlmcm9zdCByMTlwMCBkcml2ZXIiCmNvbmZpZyBNQUxJX0JJRlJPU1RfUjI2UDAKCWRlcGVuZHMgb24gTUFMSV9EREtfVkVSU0lPTgoJYm9vbCAiQmlmcm9zdCByMjZwMCBkcml2ZXIiCmNvbmZpZyBNQUxJX0JJRlJPU1RfUjMyUDEKCWRlcGVuZHMgb24gTUFMSV9EREtfVkVSU0lPTgoJYm9vbCAiQmlmcm9zdCByMzJwMSBkcml2ZXIiCmNvbmZpZyBNQUxJX0JJRlJPU1RfUjM4UDEKCWRlcGVuZHMgb24gTUFMSV9EREtfVkVSU0lPTgoJYm9vbCAiQmlmcm9zdCByMzhwMSBkcml2ZXIiCmVuZGNob2ljZQplbmRpZgo=" | base64 -d > kernel/drivers/gpu/arm/Kconfig
 
     - name: Fix Samsung build errors
       run: |
         cd kernel
-        # physwizz source should build cleanly - apply only safe no-op fixes
-        # Remove firmware/Makefile blobs that may fail on CI (no firmware files present)
+        sed -i "s/static bool __init_or_module initcall_sec_debug/static bool initcall_sec_debug/" init/main.c
+        sed -i 's/panic("fail to freeze tasks: %s", secdbg_exin_get_unfz());/panic("fail to freeze tasks");/' kernel/power/process.c
+        sed -i 's/if (sb->s_magic == F2FS_SUPER_MAGIC)/if (sb->s_magic == 0xF2F52010UL)/' fs/super.c
+        find drivers/media/platform/exynos/camera -name "*.c" -exec             sed -i 's/stpcpy(\([^,]*\),\([^)]*\))/strcpy(\\1,\\2)/g' {} \; 2>/dev/null || true
         sed -i 's/^obj-y/#obj-y/' firmware/Makefile 2>/dev/null || true
         sed -i 's/^subdir-y/#subdir-y/' firmware/Makefile 2>/dev/null || true
-        echo "Source: physwizz/M127F-S-u1 - minimal fixes applied"
+        find drivers/kernelsu -name "*.c" 2>/dev/null |           xargs grep -l "TWA_RESUME" 2>/dev/null |           xargs sed -i 's/TWA_RESUME/TWA_NOTIFY/g' 2>/dev/null || true
+        echo "Samsung build fixes applied"
 
     - name: Apply KernelSU patch
       run: |
@@ -112,21 +113,22 @@ jobs:
     - name: Configure kernel
       run: |
         cd kernel
-        # Use physwizz's own defconfig for M127F - this is what boots on real hardware
-        # Try known defconfig names for this device
-        if [ -f arch/arm64/configs/exynos3830-m12nacho_defconfig ]; then
-          make ARCH=arm64 exynos3830-m12nacho_defconfig
-          echo "Used: exynos3830-m12nacho_defconfig"
-        elif [ -f arch/arm64/configs/m12nacho_defconfig ]; then
-          make ARCH=arm64 m12nacho_defconfig
-          echo "Used: m12nacho_defconfig"
-        else
-          echo "Available defconfigs:"
-          ls arch/arm64/configs/ | grep -i "m12\|exynos3830\|nacho"
-          # Fallback: use whatever exynos3830 defconfig exists
-          DEFCONF=$(ls arch/arm64/configs/ | grep exynos3830 | head -1)
-          [ -n "$DEFCONF" ] && make ARCH=arm64 $DEFCONF || make ARCH=arm64 defconfig
+        echo "=== Available defconfigs ==="
+        ls arch/arm64/configs/ | grep -i "m12\|exynos3830\|nacho\|a12" || true
+        # Use maazm7d's own defconfig - pick the first matching one
+        DEFCONF=""
+        for candidate in exynos3830-m12nacho_defconfig m12nacho_defconfig exynos3830_defconfig; do
+          if [ -f arch/arm64/configs/$candidate ]; then
+            DEFCONF=$candidate
+            break
+          fi
+        done
+        if [ -z "$DEFCONF" ]; then
+          # Use whatever exynos3830 defconfig exists in this repo
+          DEFCONF=$(ls arch/arm64/configs/ | grep -i "exynos3830" | head -1)
         fi
+        echo "Using defconfig: $DEFCONF"
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- $DEFCONF
         # Disable KSU (vanilla test build)
         scripts/config --disable CONFIG_KSU 2>/dev/null || true
         # Disable KASLR
