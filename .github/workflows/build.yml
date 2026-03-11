@@ -104,12 +104,14 @@ jobs:
         done
         # Clear ccache to prevent stale .o files after source patches
         ccache --clear 2>/dev/null || true
-        sed -i "s/static bool __init_or_module initcall_sec_debug/static bool initcall_sec_debug/" init/main.c
+        # Ensure __start_builtin_fw is 8-byte aligned (prevents R_AARCH64_LDST64 reloc error)
+        sed -i 's/__start_builtin_fw = \.;/. = ALIGN(8); __start_builtin_fw = .;/' include/asm-generic/vmlinux.lds.h 2>/dev/null || true
+                sed -i "s/static bool __init_or_module initcall_sec_debug/static bool initcall_sec_debug/" init/main.c
         sed -i 's/panic("fail to freeze tasks: %s", secdbg_exin_get_unfz());/panic("fail to freeze tasks");/' kernel/power/process.c
         sed -i 's/if (sb->s_magic == F2FS_SUPER_MAGIC)/if (sb->s_magic == 0xF2F52010UL)/' fs/super.c
         find drivers/media/platform/exynos/camera -name "*.c" -exec             sed -i 's/stpcpy(\([^,]*\),\([^)]*\))/strcpy(\\1,\\2)/g' {} \; 2>/dev/null || true
-        sed -i 's/^obj-y/#obj-y/' firmware/Makefile 2>/dev/null || true
-        sed -i 's/^subdir-y/#subdir-y/' firmware/Makefile 2>/dev/null || true
+        # Nuke firmware/Makefile to prevent any blobs being linked in (causes alignment issues)
+        [ -f firmware/Makefile ] && echo '# emptied by OSS build patch' > firmware/Makefile || true
         find drivers/kernelsu -name "*.c" 2>/dev/null |           xargs grep -l "TWA_RESUME" 2>/dev/null |           xargs sed -i 's/TWA_RESUME/TWA_NOTIFY/g' 2>/dev/null || true
         # Disable broken camera vendor code (mcd_v2 has missing sensor headers in OSS source)
         # This removes GC5035/sensor OTP code that references undefined symbols
