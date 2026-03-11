@@ -95,6 +95,13 @@ jobs:
     - name: Fix Samsung build errors
       run: |
         cd kernel
+        # Empty all dimming.c files - each dpu30/*.c includes it as a header,
+        # causing multiple definition of get_dimming_gamma at link time.
+        # Emptying the file means zero definitions → no conflict.
+        find . -name "dimming.c" | while read f; do
+            printf '/* DIMMING_EMPTIED: stubbed to prevent multiple definition */\n' > "$f"
+            echo "Emptied: $f"
+        done
         # Clear ccache to prevent stale .o files after source patches
         ccache --clear 2>/dev/null || true
         sed -i "s/static bool __init_or_module initcall_sec_debug/static bool initcall_sec_debug/" init/main.c
