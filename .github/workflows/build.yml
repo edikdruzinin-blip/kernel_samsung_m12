@@ -192,12 +192,12 @@ jobs:
         cd kernel
         # Собираем с сохранением полного лога
         # Build kernel Image
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld KCFLAGS="-w -Wno-error" -j$(nproc) Image 2>&1 | tee /tmp/full_build.log
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld KCFLAGS="-w -Wno-error" KBUILD_LDFLAGS="--allow-multiple-definition" -j$(nproc) Image 2>&1 | tee /tmp/full_build.log
         BUILD_RESULT_IMG=${PIPESTATUS[0]}
 
         # Build kernel modules (.ko) — best-effort, partial failures from firmware deps are expected
         # -k: keep going past individual errors; || true: never fail this step
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld KCFLAGS="-w -Wno-error" -j$(nproc) -k modules 2>&1 | tee -a /tmp/full_build.log || true
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld KCFLAGS="-w -Wno-error" KBUILD_LDFLAGS="--allow-multiple-definition" -j$(nproc) -k modules 2>&1 | tee -a /tmp/full_build.log || true
 
         # Install whatever modules did build (strip debug symbols) — also best-effort
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld modules_install INSTALL_MOD_PATH=../modules_staging INSTALL_MOD_STRIP=1 2>&1 || true
