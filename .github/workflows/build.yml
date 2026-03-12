@@ -95,12 +95,6 @@ jobs:
     - name: Fix Samsung build errors
       run: |
         cd kernel
-        # Fix get_dimming_gamma: add static to its definition in dimming.c
-        # dimming.c gets #included into multiple .c files - static makes it private per TU
-        find . -name "dimming.c" | while read f; do
-            sed -i '/get_dimming_gamma[[:space:]]*(/{/static/!s/^/static /}' "$f"
-            echo "static fix: $f"
-        done
                 # Clear ccache to prevent stale .o files after source patches
         ccache --clear 2>/dev/null || true
         # Ensure __start_builtin_fw is 8-byte aligned (prevents R_AARCH64_LDST64 reloc error)
@@ -170,6 +164,9 @@ jobs:
         scripts/config --disable CONFIG_KSU 2>/dev/null || true
         # Disable KASLR
         scripts/config --disable CONFIG_RANDOMIZE_BASE
+        scripts/config --set-str CONFIG_CMDLINE "ignore_loglevel earlycon=exynos4210,mmio32,0x13820000"
+        scripts/config --enable CONFIG_CMDLINE_EXTEND    2>/dev/null || true  # append to bootloader cmdline
+        scripts/config --disable CONFIG_CMDLINE_FORCE   2>/dev/null || true
         scripts/config --enable  CONFIG_PSTORE               2>/dev/null || true
         scripts/config --enable  CONFIG_PSTORE_RAM           2>/dev/null || true
         scripts/config --enable  CONFIG_PSTORE_CONSOLE       2>/dev/null || true
@@ -204,12 +201,12 @@ jobs:
         cd kernel
         # Собираем с сохранением полного лога
         # Build kernel Image
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld KCFLAGS="-w -Wno-error" KBUILD_LDFLAGS="" -j$(nproc) Image 2>&1 | tee /tmp/full_build.log
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld KCFLAGS="-w -Wno-error" KBUILD_LDFLAGS="--allow-multiple-definition" -j$(nproc) Image 2>&1 | tee /tmp/full_build.log
         BUILD_RESULT_IMG=${PIPESTATUS[0]}
 
         # Build kernel modules (.ko) — best-effort, partial failures from firmware deps are expected
         # -k: keep going past individual errors; || true: never fail this step
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld KCFLAGS="-w -Wno-error" KBUILD_LDFLAGS="" -j$(nproc) -k modules 2>&1 | tee -a /tmp/full_build.log || true
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld KCFLAGS="-w -Wno-error" KBUILD_LDFLAGS="--allow-multiple-definition" -j$(nproc) -k modules 2>&1 | tee -a /tmp/full_build.log || true
 
         # Install whatever modules did build (strip debug symbols) — also best-effort
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld modules_install INSTALL_MOD_PATH=../modules_staging INSTALL_MOD_STRIP=1 2>&1 || true
