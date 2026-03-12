@@ -102,7 +102,9 @@ jobs:
             printf '/* DIMMING_EMPTIED: stubbed to prevent multiple definition */\n' > "$f"
             echo "Emptied: $f"
         done
-        # Clear ccache to prevent stale .o files after source patches
+        # Fix get_dimming_gamma multiple definition by renaming in duplicate files
+        echo "aW1wb3J0IG9zLCBzdWJwcm9jZXNzCgpkcHUzMCA9ICdkcml2ZXJzL3ZpZGVvL2ZiZGV2L2V4eW5vcy9kcHUzMCcKc2tpcCA9ICdkc2ltX2Rydi5jJwoKIyBGaW5kIGFsbCAuYyBmaWxlcyB0aGF0IGNvbnRhaW4gZ2V0X2RpbW1pbmdfZ2FtbWEKcmVzdWx0ID0gc3VicHJvY2Vzcy5ydW4oWydncmVwJywgJy1ybG4nLCAnZ2V0X2RpbW1pbmdfZ2FtbWEnLCBkcHUzMF0sCiAgICBjYXB0dXJlX291dHB1dD1UcnVlLCB0ZXh0PVRydWUpCgpmb3IgZnBhdGggaW4gcmVzdWx0LnN0ZG91dC5zcGxpdGxpbmVzKCk6CiAgICBmbmFtZSA9IG9zLnBhdGguYmFzZW5hbWUoZnBhdGguc3RyaXAoKSkKICAgIGlmIGZuYW1lID09IHNraXA6CiAgICAgICAgcHJpbnQoIktFRVA6ICIgKyBmcGF0aC5zdHJpcCgpKQogICAgICAgIGNvbnRpbnVlCiAgICBzcmMgPSBvcGVuKGZwYXRoLnN0cmlwKCkpLnJlYWQoKQogICAgaWYgJ2dldF9kaW1taW5nX2dhbW1hJyBub3QgaW4gc3JjOgogICAgICAgIGNvbnRpbnVlCiAgICBzbHVnID0gZm5hbWUucmVwbGFjZSgnLmMnLCcnKS5yZXBsYWNlKCctJywnXycpLnJlcGxhY2UoJy4nLCdfJykKICAgIG5ld19zcmMgPSBzcmMucmVwbGFjZSgnZ2V0X2RpbW1pbmdfZ2FtbWEnLCAnZ2V0X2RpbW1pbmdfZ2FtbWFfJyArIHNsdWcpCiAgICBvcGVuKGZwYXRoLnN0cmlwKCksICd3Jykud3JpdGUobmV3X3NyYykKICAgIHByaW50KCJSRU5BTUVEIGluOiAiICsgZnBhdGguc3RyaXAoKSkKCnByaW50KCJkaW1taW5nIGRlZHVwIGRvbmUiKQo=" | base64 -d | python3
+                # Clear ccache to prevent stale .o files after source patches
         ccache --clear 2>/dev/null || true
         # Ensure __start_builtin_fw is 8-byte aligned (prevents R_AARCH64_LDST64 reloc error)
         sed -i 's/__start_builtin_fw = \.;/. = ALIGN(8); __start_builtin_fw = .;/' include/asm-generic/vmlinux.lds.h 2>/dev/null || true
