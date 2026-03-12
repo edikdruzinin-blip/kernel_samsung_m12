@@ -171,7 +171,6 @@ jobs:
         scripts/config --disable CONFIG_KSU 2>/dev/null || true
         # Disable KASLR
         scripts/config --disable CONFIG_RANDOMIZE_BASE
-        scripts/config --disable CONFIG_RELOCATABLE          2>/dev/null || true  # prevent silent relocation crash
         scripts/config --enable  CONFIG_PSTORE               2>/dev/null || true
         scripts/config --enable  CONFIG_PSTORE_RAM           2>/dev/null || true
         scripts/config --enable  CONFIG_PSTORE_CONSOLE       2>/dev/null || true
@@ -190,6 +189,11 @@ jobs:
         scripts/config --disable CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE 2>/dev/null || true
         scripts/config --disable CONFIG_EXYNOS_PANEL           2>/dev/null || true  # dimming.c redefinition
         scripts/config --disable CONFIG_PANEL_DIMMING          2>/dev/null || true
+        scripts/config --disable CONFIG_EXYNOS_DPU             2>/dev/null || true  # get_dimming_gamma duplicate
+        scripts/config --disable CONFIG_DECON_LCD              2>/dev/null || true
+        scripts/config --disable CONFIG_FB_SAMSUNG_DECON       2>/dev/null || true
+        scripts/config --disable CONFIG_VIDEO_SAMSUNG_EXYNOS_DPU 2>/dev/null || true
+        scripts/config --disable CONFIG_DSIM_CMD_WQ_THREAD     2>/dev/null || true
         scripts/config --disable CONFIG_USB_DWC3_EXYNOS_MODULE 2>/dev/null || true  # vbus_current Samsung patch
         # Resolve dependencies
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=${{ env.CLANG_PATH }}/clang CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld olddefconfig
@@ -201,12 +205,12 @@ jobs:
         cd kernel
         # Собираем с сохранением полного лога
         # Build kernel Image
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld KCFLAGS="-w -Wno-error" KBUILD_LDFLAGS="--allow-multiple-definition" -j$(nproc) Image 2>&1 | tee /tmp/full_build.log
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld KCFLAGS="-w -Wno-error" KBUILD_LDFLAGS="" -j$(nproc) Image 2>&1 | tee /tmp/full_build.log
         BUILD_RESULT_IMG=${PIPESTATUS[0]}
 
         # Build kernel modules (.ko) — best-effort, partial failures from firmware deps are expected
         # -k: keep going past individual errors; || true: never fail this step
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld KCFLAGS="-w -Wno-error" KBUILD_LDFLAGS="--allow-multiple-definition" -j$(nproc) -k modules 2>&1 | tee -a /tmp/full_build.log || true
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld KCFLAGS="-w -Wno-error" KBUILD_LDFLAGS="" -j$(nproc) -k modules 2>&1 | tee -a /tmp/full_build.log || true
 
         # Install whatever modules did build (strip debug symbols) — also best-effort
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld modules_install INSTALL_MOD_PATH=../modules_staging INSTALL_MOD_STRIP=1 2>&1 || true
@@ -306,7 +310,7 @@ jobs:
             echo "No modules_staging directory found, skipping modules"
         fi
 
-        echo "IyBBbnlLZXJuZWwzIFJhbWRpc2sgTW9kIFNjcmlwdAojIFNNLU0xMjdGIFZhbmlsbGEgQm9vdCBUZXN0IC0gZGVidWcgYnVpbGQgd2l0aCBlYXJseWNvbgoKcHJvcGVydGllcygpIHsgJwprZXJuZWwuc3RyaW5nPVNNLU0xMjdGIFZhbmlsbGEgRGVidWcgVGVzdApkby5kZXZpY2VjaGVjaz0wCmRvLm1vZHVsZXM9MApkby5zeXN0ZW1sZXNzPTAKZG8uY2xlYW51cD0xCmRvLmNsZWFudXBvbmFib3J0PTAKZGV2aWNlLm5hbWUxPW0xMgpkZXZpY2UubmFtZTI9bTEybmFjaG8KZGV2aWNlLm5hbWUzPVNNLU0xMjdGCmRldmljZS5uYW1lND1TTS1BMTI3RgpkZXZpY2UubmFtZTU9YTEycwpzdXBwb3J0ZWQudmVyc2lvbnM9MTEKJzsgfQoKYmxvY2s9L2Rldi9ibG9jay9wbGF0Zm9ybS8xMjEwMDAwMC5kd21tYzAvYnktbmFtZS9ib290Owppc19zbG90X2RldmljZT0wOwpyYW1kaXNrX2NvbXByZXNzaW9uPWF1dG87CgouIHRvb2xzL2FrMy1jb3JlLnNoOwoKZHVtcF9ib290OwoKIyBEZWJ1ZzogYWRkIGVhcmx5Y29uIGZvciBFeHlub3MgVUFSVCBhbmQgZW5hYmxlIHBzdG9yZSBjb25zb2xlIG91dHB1dApwYXRjaF9jbWRsaW5lIGVhcmx5Y29uICJlYXJseWNvbj1leHlub3M0MjEwLG1taW8zMiwweDEzODIwMDAwIjsKcGF0Y2hfY21kbGluZSBwcmludGsuZGV2a21zZyAicHJpbnRrLmRldmttc2c9b24iOwoKd3JpdGVfYm9vdDsK" | base64 -d > anykernel/anykernel.sh
+        echo "IyBBbnlLZXJuZWwzIFJhbWRpc2sgTW9kIFNjcmlwdAojIFNNLU0xMjdGIFZhbmlsbGEgQm9vdCBUZXN0IC0gZGVidWcgYnVpbGQgd2l0aCBlYXJseWNvbgoKcHJvcGVydGllcygpIHsgJwprZXJuZWwuc3RyaW5nPVNNLU0xMjdGIFZhbmlsbGEgRGVidWcgVGVzdApkby5kZXZpY2VjaGVjaz0wCmRvLm1vZHVsZXM9MApkby5zeXN0ZW1sZXNzPTAKZG8uY2xlYW51cD0xCmRvLmNsZWFudXBvbmFib3J0PTAKZGV2aWNlLm5hbWUxPW0xMgpkZXZpY2UubmFtZTI9bTEybmFjaG8KZGV2aWNlLm5hbWUzPVNNLU0xMjdGCmRldmljZS5uYW1lND1TTS1BMTI3RgpkZXZpY2UubmFtZTU9YTEycwpzdXBwb3J0ZWQudmVyc2lvbnM9MTEKJzsgfQoKYmxvY2s9L2Rldi9ibG9jay9wbGF0Zm9ybS8xMjEwMDAwMC5kd21tYzAvYnktbmFtZS9ib290Owppc19zbG90X2RldmljZT0wOwpyYW1kaXNrX2NvbXByZXNzaW9uPWF1dG87CgouIHRvb2xzL2FrMy1jb3JlLnNoOwoKZHVtcF9ib290OwoKIyBEZWJ1ZzogYWRkIGVhcmx5Y29uIGZvciBFeHlub3MgVUFSVCBhbmQgZW5hYmxlIHBzdG9yZSBjb25zb2xlIG91dHB1dApwYXRjaF9jbWRsaW5lIGVhcmx5Y29uICJlYXJseWNvbj1leHlub3M0MjEwLG1taW8zMiwweDEzODAwMDAwIjsKcGF0Y2hfY21kbGluZSBwcmludGsuZGV2a21zZyAicHJpbnRrLmRldmttc2c9b24iOwpwYXRjaF9jbWRsaW5lIHJhbW9vcHMubWVtX2FkZHJlc3MgInJhbW9vcHMubWVtX2FkZHJlc3M9MHg5MTk1MDAwMCI7CnBhdGNoX2NtZGxpbmUgcmFtb29wcy5tZW1fc2l6ZSAicmFtb29wcy5tZW1fc2l6ZT0weDgwMDAwIjsKcGF0Y2hfY21kbGluZSByYW1vb3BzLmNvbnNvbGVfc2l6ZSAicmFtb29wcy5jb25zb2xlX3NpemU9MHg4MDAwMCI7Cgp3cml0ZV9ib290Owo=" | base64 -d > anykernel/anykernel.sh
         cd anykernel && zip -r9 ../SM-M127F_Vanilla.zip . -x "*.git*" "*.github*" "*.md"
         ls -lh ../SM-M127F_Vanilla.zip
         echo "=== ZIP contents (modules) ==="
