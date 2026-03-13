@@ -165,10 +165,6 @@ jobs:
         # Disable KASLR
         scripts/config --disable CONFIG_RANDOMIZE_BASE
         scripts/config --disable CONFIG_SOFT_WATCHDOG          2>/dev/null || true  # kills boot at 100s
-        scripts/config --disable CONFIG_HARDLOCKUP_DETECTOR    2>/dev/null || true
-        scripts/config --disable CONFIG_DETECT_HUNG_TASK       2>/dev/null || true
-        scripts/config --disable CONFIG_BOOTPARAM_HUNG_TASK_PANIC 2>/dev/null || true
-        scripts/config --disable CONFIG_BOOTPARAM_SOFTLOCKUP_PANIC 2>/dev/null || true
         scripts/config --set-str CONFIG_CMDLINE "ignore_loglevel selinux=0 androidboot.selinux=permissive softdog.soft_panic=0 softdog.soft_margin=600"
         scripts/config --enable  CONFIG_CMDLINE_EXTEND    2>/dev/null || true
         scripts/config --disable CONFIG_CMDLINE_FORCE     2>/dev/null || true
@@ -318,7 +314,7 @@ jobs:
             echo "No modules_staging directory found, skipping modules"
         fi
 
-        echo "IyBBbnlLZXJuZWwzIFJhbWRpc2sgTW9kIFNjcmlwdAojIFNNLU0xMjdGIFZhbmlsbGEgQm9vdCBUZXN0IC0gZGVidWcgYnVpbGQgd2l0aCBlYXJseWNvbgoKcHJvcGVydGllcygpIHsgJwprZXJuZWwuc3RyaW5nPVNNLU0xMjdGIFZhbmlsbGEgRGVidWcgVGVzdApkby5kZXZpY2VjaGVjaz0wCmRvLm1vZHVsZXM9MApkby5zeXN0ZW1sZXNzPTAKZG8uY2xlYW51cD0xCmRvLmNsZWFudXBvbmFib3J0PTAKZGV2aWNlLm5hbWUxPW0xMgpkZXZpY2UubmFtZTI9bTEybmFjaG8KZGV2aWNlLm5hbWUzPVNNLU0xMjdGCmRldmljZS5uYW1lND1TTS1BMTI3RgpkZXZpY2UubmFtZTU9YTEycwpzdXBwb3J0ZWQudmVyc2lvbnM9MTEKJzsgfQoKYmxvY2s9L2Rldi9ibG9jay9wbGF0Zm9ybS8xMjEwMDAwMC5kd21tYzAvYnktbmFtZS9ib290Owppc19zbG90X2RldmljZT0wOwpyYW1kaXNrX2NvbXByZXNzaW9uPWF1dG87CgouIHRvb2xzL2FrMy1jb3JlLnNoOwoKZHVtcF9ib290OwoKIyBEZWJ1ZzogYWRkIGVhcmx5Y29uIGZvciBFeHlub3MgVUFSVCBhbmQgZW5hYmxlIHBzdG9yZSBjb25zb2xlIG91dHB1dApwYXRjaF9jbWRsaW5lIGVhcmx5Y29uICJlYXJseWNvbj1leHlub3M0MjEwLG1taW8zMiwweDEzODAwMDAwIjsKcGF0Y2hfY21kbGluZSBhbmRyb2lkYm9vdC5zZWxpbnV4ICJhbmRyb2lkYm9vdC5zZWxpbnV4PXBlcm1pc3NpdmUiOwpwYXRjaF9jbWRsaW5lIHNlbGludXggInNlbGludXg9MCI7CnBhdGNoX2NtZGxpbmUgcHJpbnRrLmRldmttc2cgInByaW50ay5kZXZrbXNnPW9uIjsKcGF0Y2hfY21kbGluZSByYW1vb3BzLm1lbV9hZGRyZXNzICJyYW1vb3BzLm1lbV9hZGRyZXNzPTB4OTE5NTAwMDAiOwpwYXRjaF9jbWRsaW5lIHJhbW9vcHMubWVtX3NpemUgInJhbW9vcHMubWVtX3NpemU9MHg4MDAwMCI7CnBhdGNoX2NtZGxpbmUgcmFtb29wcy5jb25zb2xlX3NpemUgInJhbW9vcHMuY29uc29sZV9zaXplPTB4ODAwMDAiOwoKd3JpdGVfYm9vdDsK" | base64 -d > anykernel/anykernel.sh
+        echo "IyBBbnlLZXJuZWwzIFJhbWRpc2sgTW9kIFNjcmlwdAojIFNNLU0xMjdGIFZhbmlsbGEgQm9vdCBUZXN0IC0gZGVidWcgYnVpbGQgd2l0aCBlYXJseWNvbgoKcHJvcGVydGllcygpIHsgJwprZXJuZWwuc3RyaW5nPVNNLU0xMjdGIFZhbmlsbGEgRGVidWcgVGVzdApkby5kZXZpY2VjaGVjaz0wCmRvLm1vZHVsZXM9MApkby5zeXN0ZW1sZXNzPTAKZG8uY2xlYW51cD0xCmRvLmNsZWFudXBvbmFib3J0PTAKZGV2aWNlLm5hbWUxPW0xMgpkZXZpY2UubmFtZTI9bTEybmFjaG8KZGV2aWNlLm5hbWUzPVNNLU0xMjdGCmRldmljZS5uYW1lND1TTS1BMTI3RgpkZXZpY2UubmFtZTU9YTEycwpzdXBwb3J0ZWQudmVyc2lvbnM9MTEKJzsgfQoKYmxvY2s9L2Rldi9ibG9jay9wbGF0Zm9ybS8xMjEwMDAwMC5kd21tYzAvYnktbmFtZS9ib290Owppc19zbG90X2RldmljZT0wOwpyYW1kaXNrX2NvbXByZXNzaW9uPWF1dG87CgouIHRvb2xzL2FrMy1jb3JlLnNoOwoKZHVtcF9ib290OwoKIyBEZWJ1ZzogYWRkIGVhcmx5Y29uIGZvciBFeHlub3MgVUFSVCBhbmQgZW5hYmxlIHBzdG9yZSBjb25zb2xlIG91dHB1dApwYXRjaF9jbWRsaW5lIGVhcmx5Y29uICJlYXJseWNvbj1leHlub3M0MjEwLG1taW8zMiwweDEzODAwMDAwIjsKcGF0Y2hfY21kbGluZSBhbmRyb2lkYm9vdC5zZWxpbnV4ICJhbmRyb2lkYm9vdC5zZWxpbnV4PXBlcm1pc3NpdmUiOwpwYXRjaF9jbWRsaW5lIHNlbGludXggInNlbGludXg9MCI7CnBhdGNoX2NtZGxpbmUgcHJpbnRrLmRldmttc2cgInByaW50ay5kZXZrbXNnPW9uIjsKcGF0Y2hfY21kbGluZSBwcmludGsudGltZSAicHJpbnRrLnRpbWU9MSI7CnBhdGNoX2NtZGxpbmUgcmFtb29wcy5tZW1fYWRkcmVzcyAicmFtb29wcy5tZW1fYWRkcmVzcz0weDkxOTUwMDAwIjsKcGF0Y2hfY21kbGluZSByYW1vb3BzLm1lbV9zaXplICJyYW1vb3BzLm1lbV9zaXplPTB4ODAwMDAiOwpwYXRjaF9jbWRsaW5lIHJhbW9vcHMuY29uc29sZV9zaXplICJyYW1vb3BzLmNvbnNvbGVfc2l6ZT0weDgwMDAwIjsKCndyaXRlX2Jvb3Q7Cg==" | base64 -d > anykernel/anykernel.sh
         cd anykernel && zip -r9 ../SM-M127F_Vanilla.zip . -x "*.git*" "*.github*" "*.md"
         ls -lh ../SM-M127F_Vanilla.zip
         echo "=== ZIP contents (modules) ==="
