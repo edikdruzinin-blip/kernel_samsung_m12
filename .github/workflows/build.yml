@@ -164,7 +164,14 @@ jobs:
         scripts/config --disable CONFIG_KSU 2>/dev/null || true
         # Disable KASLR
         scripts/config --disable CONFIG_RANDOMIZE_BASE
-        scripts/config --set-str CONFIG_CMDLINE "ignore_loglevel earlycon=exynos4210,mmio32,0x13820000"
+        scripts/config --set-str CONFIG_CMDLINE "ignore_loglevel earlycon=exynos4210,mmio32,0x13800000 no_console_suspend"
+        scripts/config --enable  CONFIG_CMDLINE_EXTEND    2>/dev/null || true
+        scripts/config --disable CONFIG_CMDLINE_FORCE     2>/dev/null || true
+        # Force 39-bit VA (Samsung Exynos 850 standard, prevents paging_init() crash)
+        scripts/config --enable  CONFIG_ARM64_VA_BITS_39  2>/dev/null || true
+        scripts/config --disable CONFIG_ARM64_VA_BITS_48  2>/dev/null || true
+        # Disable VMAP_STACK - Samsung early boot code can conflict with it
+        scripts/config --disable CONFIG_VMAP_STACK        2>/dev/null || true
         scripts/config --enable CONFIG_CMDLINE_EXTEND    2>/dev/null || true  # append to bootloader cmdline
         scripts/config --disable CONFIG_CMDLINE_FORCE   2>/dev/null || true
         scripts/config --enable  CONFIG_PSTORE               2>/dev/null || true
