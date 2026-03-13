@@ -165,6 +165,15 @@ jobs:
         # Disable KASLR
         scripts/config --disable CONFIG_RANDOMIZE_BASE
         scripts/config --disable CONFIG_SOFT_WATCHDOG          2>/dev/null || true  # kills boot at 100s
+        # Dynamic partitions - CRITICAL for mounting system/vendor from super
+        scripts/config --enable  CONFIG_DM_LINEAR               2>/dev/null || true
+        scripts/config --enable  CONFIG_DM_VERITY               2>/dev/null || true
+        scripts/config --enable  CONFIG_DM_SNAPSHOT             2>/dev/null || true
+        scripts/config --enable  CONFIG_DM_USER                 2>/dev/null || true
+        scripts/config --enable  CONFIG_ANDROID_BINDER_IPC      2>/dev/null || true
+        scripts/config --enable  CONFIG_ANDROID_BINDERFS        2>/dev/null || true
+        scripts/config --enable  CONFIG_SQUASHFS                2>/dev/null || true
+        scripts/config --enable  CONFIG_OVERLAY_FS              2>/dev/null || true
         scripts/config --set-str CONFIG_CMDLINE "ignore_loglevel selinux=0 androidboot.selinux=permissive softdog.soft_panic=0 softdog.soft_margin=600"
         scripts/config --enable  CONFIG_CMDLINE_EXTEND    2>/dev/null || true
         scripts/config --disable CONFIG_CMDLINE_FORCE     2>/dev/null || true
@@ -173,8 +182,6 @@ jobs:
         scripts/config --disable CONFIG_ARM64_VA_BITS_48  2>/dev/null || true
         # Disable VMAP_STACK - Samsung early boot code can conflict with it
         scripts/config --disable CONFIG_VMAP_STACK        2>/dev/null || true
-        scripts/config --enable CONFIG_CMDLINE_EXTEND    2>/dev/null || true  # append to bootloader cmdline
-        scripts/config --disable CONFIG_CMDLINE_FORCE   2>/dev/null || true
         scripts/config --enable  CONFIG_PSTORE               2>/dev/null || true
         scripts/config --enable  CONFIG_PSTORE_RAM           2>/dev/null || true
         scripts/config --enable  CONFIG_PSTORE_CONSOLE       2>/dev/null || true
