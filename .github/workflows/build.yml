@@ -164,7 +164,12 @@ jobs:
         scripts/config --disable CONFIG_KSU 2>/dev/null || true
         # Disable KASLR
         scripts/config --disable CONFIG_RANDOMIZE_BASE
-        scripts/config --set-str CONFIG_CMDLINE "ignore_loglevel earlycon=exynos4210,mmio32,0x13800000 no_console_suspend androidboot.selinux=permissive selinux=0 softdog.soft_panic=0"
+        scripts/config --disable CONFIG_SOFT_WATCHDOG          2>/dev/null || true  # kills boot at 100s
+        scripts/config --disable CONFIG_HARDLOCKUP_DETECTOR    2>/dev/null || true
+        scripts/config --disable CONFIG_DETECT_HUNG_TASK       2>/dev/null || true
+        scripts/config --disable CONFIG_BOOTPARAM_HUNG_TASK_PANIC 2>/dev/null || true
+        scripts/config --disable CONFIG_BOOTPARAM_SOFTLOCKUP_PANIC 2>/dev/null || true
+        scripts/config --set-str CONFIG_CMDLINE "ignore_loglevel selinux=0 androidboot.selinux=permissive softdog.soft_panic=0 softdog.soft_margin=600"
         scripts/config --enable  CONFIG_CMDLINE_EXTEND    2>/dev/null || true
         scripts/config --disable CONFIG_CMDLINE_FORCE     2>/dev/null || true
         # Force 39-bit VA (Samsung Exynos 850 standard, prevents paging_init() crash)
