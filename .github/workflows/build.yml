@@ -154,6 +154,24 @@ jobs:
         scripts/config --enable  CONFIG_PSTORE 2>/dev/null || true
         scripts/config --enable  CONFIG_PSTORE_RAM 2>/dev/null || true
         scripts/config --enable  CONFIG_PSTORE_CONSOLE 2>/dev/null || true
+        # Disable debug options (maazm7d defconfig enables these, causes slowness + OOM)
+        scripts/config --disable CONFIG_DEBUG_PAGEALLOC           2>/dev/null || true
+        scripts/config --disable CONFIG_DEBUG_PAGEALLOC_ENABLE_DEFAULT 2>/dev/null || true
+        scripts/config --disable CONFIG_SLUB_DEBUG_ON             2>/dev/null || true
+        scripts/config --disable CONFIG_DEBUG_OBJECTS             2>/dev/null || true
+        scripts/config --disable CONFIG_DEBUG_KMEMLEAK            2>/dev/null || true
+        scripts/config --disable CONFIG_DEBUG_MUTEXES             2>/dev/null || true
+        scripts/config --disable CONFIG_DEBUG_SPINLOCK            2>/dev/null || true
+        scripts/config --disable CONFIG_DEBUG_LOCK_ALLOC          2>/dev/null || true
+        scripts/config --disable CONFIG_LOCKDEP                   2>/dev/null || true
+        scripts/config --disable CONFIG_DEBUG_MEMORY_INIT         2>/dev/null || true
+        scripts/config --disable CONFIG_DEBUG_PREEMPT             2>/dev/null || true
+        scripts/config --disable CONFIG_PAGE_POISONING            2>/dev/null || true
+        scripts/config --disable CONFIG_DEBUG_FS                  2>/dev/null || true
+        scripts/config --disable CONFIG_CGROUP_DEBUG              2>/dev/null || true
+        # Use performance optimization like physwizz
+        scripts/config --disable CONFIG_CC_OPTIMIZE_FOR_SIZE      2>/dev/null || true
+        scripts/config --enable  CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE 2>/dev/null || true
         # physwizz critical config values
         scripts/config --enable  CONFIG_ANDROID_BINDERFS 2>/dev/null || true
         scripts/config --set-str CONFIG_ANDROID_BINDER_DEVICES "binder,hwbinder,vndbinder" 2>/dev/null || true
