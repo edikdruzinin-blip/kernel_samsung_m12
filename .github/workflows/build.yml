@@ -146,6 +146,8 @@ jobs:
         scripts/config --disable CONFIG_EXTRA_FIRMWARE   2>/dev/null || true
         scripts/config --disable CONFIG_IFCONN_MANAGER   2>/dev/null || true
         scripts/config --disable CONFIG_SENSORS_SSP      2>/dev/null || true
+        scripts/config --disable CONFIG_USB_NOTIFY_LAYER 2>/dev/null || true
+        scripts/config --disable CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE 2>/dev/null || true
         scripts/config --disable CONFIG_SHUB             2>/dev/null || true
         scripts/config --disable CONFIG_SHUB_IIO         2>/dev/null || true
         # Boot-critical enables
