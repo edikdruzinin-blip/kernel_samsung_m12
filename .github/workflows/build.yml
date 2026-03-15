@@ -159,6 +159,13 @@ jobs:
         scripts/config --disable CONFIG_SHUB             2>/dev/null || true
         scripts/config --disable CONFIG_SHUB_IIO         2>/dev/null || true
         scripts/config --enable  CONFIG_ANDROID_BINDERFS   2>/dev/null || true
+        # F2FS compression - /data is mounted with compress_algorithm=lzo (confirmed from physwizz)
+        # Without this /data cannot be mounted => Android never boots
+        scripts/config --enable  CONFIG_F2FS_FS_COMPRESSION 2>/dev/null || true
+        scripts/config --enable  CONFIG_F2FS_FS_LZO         2>/dev/null || true
+        scripts/config --enable  CONFIG_F2FS_FS_LZ4         2>/dev/null || true
+        # Panic on oops - forces fast reboot + ramoops entry instead of infinite hang
+        scripts/config --enable  CONFIG_PANIC_ON_OOPS       2>/dev/null || true
         # Boot-critical enables
         scripts/config --enable  CONFIG_ARM64_VA_BITS_39 2>/dev/null || true
         scripts/config --disable CONFIG_ARM64_VA_BITS_48 2>/dev/null || true
