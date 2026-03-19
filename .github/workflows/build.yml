@@ -161,6 +161,19 @@ jobs:
         # USB_ANDROID_SAMSUNG_COMPOSITE kept enabled
         scripts/config --disable CONFIG_SHUB             2>/dev/null || true
         scripts/config --disable CONFIG_SHUB_IIO         2>/dev/null || true
+        # TZDEV - Samsung TrustZone driver - REQUIRED on Exynos850
+        # Without it, TZ Secure World triggers IWI_PANIC (IRQ 469) after ~5s
+        scripts/config --enable  CONFIG_TZDEV                        2>/dev/null || true
+        scripts/config --set-val CONFIG_TZDEV_IWI_EVENT         468  2>/dev/null || true
+        scripts/config --set-val CONFIG_TZDEV_IWI_PANIC         469  2>/dev/null || true
+        scripts/config --enable  CONFIG_TZDEV_USE_ARM_CALLING_CONVENTION 2>/dev/null || true
+        scripts/config --enable  CONFIG_TZDEV_SWD_PANIC_IS_CRITICAL  2>/dev/null || true
+        scripts/config --enable  CONFIG_TZDEV_SK_MULTICORE           2>/dev/null || true
+        scripts/config --enable  CONFIG_TZDEV_PAGE_MIGRATION         2>/dev/null || true
+        scripts/config --enable  CONFIG_TZDEV_BOOST                  2>/dev/null || true
+        scripts/config --enable  CONFIG_TZDEV_KTHREADS_SMPBOOT       2>/dev/null || true
+        scripts/config --enable  CONFIG_TZIC                         2>/dev/null || true
+        scripts/config --enable  CONFIG_TZIC_USE_TZDEV               2>/dev/null || true
         # Disable Samsung debug drivers that access Samsung-specific memory at init
         # These are safe to disable for boot testing
         scripts/config --disable CONFIG_SEC_DEBUG            2>/dev/null || true
@@ -171,6 +184,26 @@ jobs:
         scripts/config --disable CONFIG_SEC_DEBUG_LAST_KMSG  2>/dev/null || true
         scripts/config --disable CONFIG_SEC_DEBUG_INIT_LOG   2>/dev/null || true
         scripts/config --disable CONFIG_SEC_DEBUG_FIRST2M_LOG 2>/dev/null || true
+        # Disable ALL Samsung hardware drivers that probe at init - for diagnosis only
+        # These all have module_init that access Samsung-specific hardware/memory
+        scripts/config --disable CONFIG_TZDEV               2>/dev/null || true
+        scripts/config --disable CONFIG_MFD_SM5714          2>/dev/null || true
+        scripts/config --disable CONFIG_BATTERY_SAMSUNG     2>/dev/null || true
+        scripts/config --disable CONFIG_CHARGER_SM5714      2>/dev/null || true
+        scripts/config --disable CONFIG_FUELGAUGE_SM5714    2>/dev/null || true
+        scripts/config --disable CONFIG_MUIC_SM5714         2>/dev/null || true
+        scripts/config --disable CONFIG_PDIC_SM5714         2>/dev/null || true
+        scripts/config --disable CONFIG_MUIC_NOTIFIER       2>/dev/null || true
+        scripts/config --disable CONFIG_VBUS_NOTIFIER       2>/dev/null || true
+        scripts/config --disable CONFIG_PDIC_NOTIFIER       2>/dev/null || true
+        scripts/config --disable CONFIG_USB_TYPEC_MANAGER_NOTIFIER 2>/dev/null || true
+        scripts/config --disable CONFIG_IF_CB_MANAGER       2>/dev/null || true
+        scripts/config --disable CONFIG_USB_HOST_NOTIFY     2>/dev/null || true
+        scripts/config --disable CONFIG_USB_EXTERNAL_NOTIFY 2>/dev/null || true
+        scripts/config --disable CONFIG_USB_HW_PARAM        2>/dev/null || true
+        scripts/config --disable CONFIG_ARGOS               2>/dev/null || true
+        scripts/config --disable CONFIG_SEC_ABC             2>/dev/null || true
+        scripts/config --disable CONFIG_SENSORS_SSP         2>/dev/null || true
         scripts/config --enable  CONFIG_ANDROID_BINDERFS   2>/dev/null || true
         # F2FS compression - /data is mounted with compress_algorithm=lzo (confirmed from physwizz)
         # Without this /data cannot be mounted => Android never boots
