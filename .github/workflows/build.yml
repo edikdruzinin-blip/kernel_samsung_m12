@@ -264,16 +264,45 @@ jobs:
     - name: Clone AnyKernel3
       run: git clone --depth=1 https://github.com/osm0sis/AnyKernel3 anykernel
 
-    - name: Download physwizz tools (Spectrum/ZRAM)
-      continue-on-error: true
+    - name: Download physwizz v5 and extract ramdisk
       run: |
-        curl -L --max-time 30 "https://github.com/physwizz/M127F-T-u3/releases/download/v5-clean/physwizz_m127f-u3-kernel-v5-clean.zip" -o physwizz.zip || \
-        curl -L --max-time 30 "https://github.com/physwizz/M127F-T-u3/releases/latest/download/physwizz_m127f-u3-kernel-v5-clean.zip" -o physwizz.zip || \
-        { echo "WARNING: Could not download physwizz zip - Spectrum/ZRAM tools will be missing"; exit 0; }
-        if [ -f physwizz.zip ] && [ -s physwizz.zip ]; then
-          mkdir -p physwizz_tools
-          unzip -j physwizz.zip "tools/init_spectrum.rc" "tools/init.spectrum.sh" "tools/init.zram.rc" "tools/30zram" -d physwizz_tools/ 2>/dev/null || true
-          cp physwizz_tools/* anykernel/tools/ 2>/dev/null && echo "Physwizz tools copied OK" || echo "WARNING: Some physwizz tools missing"
+        echo "Downloading physwizz v5-clean ZIP..."
+        curl -L --max-time 60 "https://github.com/physwizz/M127F-T-u3/releases/download/v5-clean/physwizz_m127f-u3-kernel-v5-clean.zip" -o physwizz.zip || \
+        curl -L --max-time 60 "https://github.com/physwizz/M127F-T-u3/releases/latest/download/physwizz_m127f-u3-kernel-v5-clean.zip" -o physwizz.zip
+        if [ ! -f physwizz.zip ] || [ ! -s physwizz.zip ]; then
+          echo "FATAL: could not download physwizz v5 zip"
+          exit 1
+        fi
+        echo "=== physwizz.zip contents ==="
+        unzip -l physwizz.zip | head -30
+
+        # Extract tools
+        mkdir -p physwizz_tools
+        unzip -j physwizz.zip "tools/init_spectrum.rc" "tools/init.spectrum.sh" "tools/init.zram.rc" "tools/30zram" -d physwizz_tools/ 2>/dev/null || true
+        cp physwizz_tools/* anykernel/tools/ 2>/dev/null && echo "Physwizz tools copied OK" || true
+
+        # Extract physwizz ramdisk from their boot.img or Image
+        # physwizz v5 ZIP contains Image (kernel+ramdisk packed) or a separate boot.img
+        mkdir -p physwizz_extracted
+        unzip -o physwizz.zip -d physwizz_extracted/ 2>/dev/null || true
+        ls -la physwizz_extracted/
+
+        # If there is a boot.img, extract ramdisk with magiskboot
+        if [ -f physwizz_extracted/boot.img ]; then
+          echo "Found boot.img in physwizz zip - extracting ramdisk"
+          cd physwizz_extracted
+          ../anykernel/tools/magiskboot unpack boot.img
+          ls -la
+          if [ -d ramdisk ] || [ -f ramdisk.cpio* ]; then
+            echo "Ramdisk extracted successfully"
+            cp -r ramdisk ../anykernel/ramdisk_physwizz/ 2>/dev/null || true
+            cp ramdisk.cpio* ../anykernel/ 2>/dev/null || true
+          fi
+          cd ..
+        else
+          echo "No boot.img found in physwizz zip - will use device ramdisk (dump_boot)"
+          echo "ZIP contains:"
+          ls physwizz_extracted/
         fi
 
     - name: Package kernel
