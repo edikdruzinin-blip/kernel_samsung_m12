@@ -161,6 +161,16 @@ jobs:
         # USB_ANDROID_SAMSUNG_COMPOSITE kept enabled
         scripts/config --disable CONFIG_SHUB             2>/dev/null || true
         scripts/config --disable CONFIG_SHUB_IIO         2>/dev/null || true
+        # Disable Samsung debug drivers that access Samsung-specific memory at init
+        # These are safe to disable for boot testing
+        scripts/config --disable CONFIG_SEC_DEBUG            2>/dev/null || true
+        scripts/config --disable CONFIG_SEC_DEBUG_SUMMARY    2>/dev/null || true
+        scripts/config --disable CONFIG_SEC_DEBUG_EXTRA_INFO 2>/dev/null || true
+        scripts/config --disable CONFIG_SEC_DEBUG_AUTO_COMMENT 2>/dev/null || true
+        scripts/config --disable CONFIG_SEC_DEBUG_HW_PARAM   2>/dev/null || true
+        scripts/config --disable CONFIG_SEC_DEBUG_LAST_KMSG  2>/dev/null || true
+        scripts/config --disable CONFIG_SEC_DEBUG_INIT_LOG   2>/dev/null || true
+        scripts/config --disable CONFIG_SEC_DEBUG_FIRST2M_LOG 2>/dev/null || true
         scripts/config --enable  CONFIG_ANDROID_BINDERFS   2>/dev/null || true
         # F2FS compression - /data is mounted with compress_algorithm=lzo (confirmed from physwizz)
         # Without this /data cannot be mounted => Android never boots
@@ -169,8 +179,6 @@ jobs:
         scripts/config --enable  CONFIG_F2FS_FS_LZ4         2>/dev/null || true
         # Panic on oops - forces fast reboot + ramoops entry instead of infinite hang
         scripts/config --enable  CONFIG_PANIC_ON_OOPS       2>/dev/null || true
-        # Disable auto-arming of HW watchdog at boot - prevents 5s WDT reset if driver init hangs
-        scripts/config --disable CONFIG_WATCHDOG_HANDLE_BOOT_ENABLED 2>/dev/null || true
         # Boot-critical enables
         scripts/config --enable  CONFIG_ARM64_VA_BITS_39 2>/dev/null || true
         scripts/config --disable CONFIG_ARM64_VA_BITS_48 2>/dev/null || true
