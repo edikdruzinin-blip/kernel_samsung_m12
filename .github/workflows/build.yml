@@ -258,6 +258,17 @@ jobs:
         scripts/config --enable  CONFIG_CAMERA_CIS_GC02M1_OBJ         2>/dev/null || true
         scripts/config --enable  CONFIG_CAMERA_ACT_FP5529_OBJ         2>/dev/null || true
         scripts/config --enable  CONFIG_CAMERA_FLASH_SM5714_OBJ       2>/dev/null || true
+        # Audio - Samsung ABOX DSP + AUD3004X codec + AW8896 smart amplifier
+        # ABOX driver is present but codec drivers missing -> no sound
+        scripts/config --enable  CONFIG_SND_SOC_SAMSUNG_EXYNOS3830_AUD3004X 2>/dev/null || true
+        scripts/config --enable  CONFIG_SND_SOC_SAMSUNG_AUDIO              2>/dev/null || true
+        scripts/config --enable  CONFIG_SND_SOC_SAMSUNG_SYSFS_EARJACK      2>/dev/null || true
+        scripts/config --enable  CONFIG_SND_SOC_AUD3004X                   2>/dev/null || true
+        scripts/config --enable  CONFIG_SND_SOC_AUD3004X_5PIN              2>/dev/null || true
+        scripts/config --enable  CONFIG_SND_SMARTPA_AW8896                 2>/dev/null || true
+        # Flashlight - SM5714 LED flash driver (sm5714-fled platform device)
+        scripts/config --enable  CONFIG_LEDS_SM5714                        2>/dev/null || true
+        scripts/config --enable  CONFIG_CAMERA_FLASH_SM5714_OBJ            2>/dev/null || true
         # Boot-critical enables
         scripts/config --enable  CONFIG_ARM64_VA_BITS_39 2>/dev/null || true
         scripts/config --disable CONFIG_ARM64_VA_BITS_48 2>/dev/null || true
