@@ -266,9 +266,21 @@ jobs:
         scripts/config --enable  CONFIG_SND_SOC_AUD3004X                   2>/dev/null || true
         scripts/config --enable  CONFIG_SND_SOC_AUD3004X_5PIN              2>/dev/null || true
         scripts/config --enable  CONFIG_SND_SMARTPA_AW8896                 2>/dev/null || true
-        # Flashlight - SM5714 LED flash driver (sm5714-fled platform device)
+        # Flashlight + vibration + NFC + touch buttons + thermistor
         scripts/config --enable  CONFIG_LEDS_SM5714                        2>/dev/null || true
         scripts/config --enable  CONFIG_CAMERA_FLASH_SM5714_OBJ            2>/dev/null || true
+        scripts/config --enable  CONFIG_DC_VIBRATOR                        2>/dev/null || true
+        scripts/config --enable  CONFIG_SEC_VIBRATOR                       2>/dev/null || true
+        scripts/config --enable  CONFIG_SEC_NFC                            2>/dev/null || true
+        scripts/config --enable  CONFIG_SEC_NFC_LOGGER                     2>/dev/null || true
+        scripts/config --enable  CONFIG_SENSORS_A96T3X6                    2>/dev/null || true
+        scripts/config --enable  CONFIG_SENSORS_A96T3X6_SUB                2>/dev/null || true
+        scripts/config --enable  CONFIG_SENSORS_SEC_THERMISTOR             2>/dev/null || true
+        scripts/config --enable  CONFIG_SEC_ABC                            2>/dev/null || true
+        scripts/config --enable  CONFIG_SEC_ABC_COMMON                     2>/dev/null || true
+        scripts/config --enable  CONFIG_SEC_ABC_HUB                        2>/dev/null || true
+        scripts/config --enable  CONFIG_SEC_ABC_HUB_CORE                   2>/dev/null || true
+        scripts/config --enable  CONFIG_SEC_ABC_HUB_BOOTC                  2>/dev/null || true
         # Boot-critical enables
         scripts/config --enable  CONFIG_ARM64_VA_BITS_39 2>/dev/null || true
         scripts/config --disable CONFIG_ARM64_VA_BITS_48 2>/dev/null || true
