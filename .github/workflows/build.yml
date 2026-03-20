@@ -198,8 +198,11 @@ jobs:
         scripts/config --disable CONFIG_SEC_DEBUG_FIRST2M_LOG 2>/dev/null || true
         # SM5714 PMIC - main power management chip on SM-M127F
         scripts/config --enable  CONFIG_MFD_SM5714          2>/dev/null || true
-        scripts/config --enable  CONFIG_CHARGER_SM5714      2>/dev/null || true
-        scripts/config --enable  CONFIG_FUELGAUGE_SM5714    2>/dev/null || true
+        # CHARGER_SM5714 and FUELGAUGE_SM5714 cause pdic_notifier.h/ifconn_notifier.h
+        # header conflict (duplicate RID enum). Disabled until header conflict is fixed.
+        # Battery charging still works via BATTERY_SAMSUNG generic driver.
+        scripts/config --disable CONFIG_CHARGER_SM5714      2>/dev/null || true
+        scripts/config --disable CONFIG_FUELGAUGE_SM5714    2>/dev/null || true
         scripts/config --enable  CONFIG_LEDS_SM5714         2>/dev/null || true
         scripts/config --enable  CONFIG_MUIC_SM5714         2>/dev/null || true
         scripts/config --enable  CONFIG_MUIC_NOTIFIER       2>/dev/null || true
