@@ -211,7 +211,9 @@ jobs:
         scripts/config --enable  CONFIG_PDIC_SM5714         2>/dev/null || true
         scripts/config --enable  CONFIG_PDIC_NOTIFIER       2>/dev/null || true
         scripts/config --enable  CONFIG_USB_TYPEC_MANAGER_NOTIFIER 2>/dev/null || true
-        scripts/config --enable  CONFIG_BATTERY_SAMSUNG     2>/dev/null || true
+        # BATTERY_SAMSUNG disabled: pdic_notifier.h conflicts with ifconn_notifier.h
+        # when IFCONN_MANAGER=n. Both define PDIC types needed by sec_battery.c
+        scripts/config --disable CONFIG_BATTERY_SAMSUNG     2>/dev/null || true
         scripts/config --enable  CONFIG_ANDROID_BINDERFS   2>/dev/null || true
         # F2FS compression - /data is mounted with compress_algorithm=lzo (confirmed from physwizz)
         # Without this /data cannot be mounted => Android never boots
