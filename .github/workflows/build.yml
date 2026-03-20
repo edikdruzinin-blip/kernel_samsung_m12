@@ -129,13 +129,12 @@ jobs:
 
         # Fix undefined references: create weak stubs for all missing Samsung symbols
         echo "aW1wb3J0IG9zCgojIENyZWF0ZSBhIHN0dWJzIGZpbGUgdGhhdCB3ZWFrbHkgZGVmaW5lcyBhbGwgU2Ftc3VuZy1zcGVjaWZpYyBzeW1ib2xzCiMgbWlzc2luZyBmcm9tIHRoZSBPU1Mgc291cmNlIHRyZWUuIF9fd2VhayBhbGxvd3MgcmVhbCBkZWZpbml0aW9ucyB0byBvdmVycmlkZS4Kc3R1YnNfcGF0aCA9ICdkcml2ZXJzL3NhbXN1bmcvc2Ftc3VuZ19vc3Nfc3R1YnMuYycKb3MubWFrZWRpcnMoJ2RyaXZlcnMvc2Ftc3VuZycsIGV4aXN0X29rPVRydWUpCgpzdHVic19jb250ZW50ID0gKAogICAgIi8qIHNhbXN1bmdfb3NzX3N0dWJzLmMgLSB3ZWFrIHN0dWJzIGZvciBTYW1zdW5nIHN5bWJvbHMgbWlzc2luZyBpbiBPU1MgKi8iICsgY2hyKDEwKSArCiAgICAiI2luY2x1ZGUgPGxpbnV4L2tlcm5lbC5oPiIgKyBjaHIoMTApICsKICAgICIjaW5jbHVkZSA8bGludXgvbW9kdWxlLmg+IiArIGNocigxMCkgKyBjaHIoMTApICsKICAgICIvKiBwYW5lbC9kaXNwbGF5IHN5bWJvbHMgKi8iICsgY2hyKDEwKSArCiAgICAiaW50IF9fd2VhayBib290X3BhbmVsX2lkID0gMDsiICsgY2hyKDEwKSArCiAgICAiaW50IF9fd2VhayBnZXRfbGNkX2luZm8oY2hhciAqYXJnKSB7IHJldHVybiAwOyB9IiArIGNocigxMCkgKyBjaHIoMTApICsKICAgICIvKiBzdHBjcHkgLSBnbGliYyBvbmx5LCBub3QgaW4ga2VybmVsICovIiArIGNocigxMCkgKwogICAgImNoYXIgKiBfX3dlYWsgc3RwY3B5KGNoYXIgKmRzdCwgY29uc3QgY2hhciAqc3JjKSB7IiArIGNocigxMCkgKwogICAgIiAgICB3aGlsZSAoKCpkc3QrKyA9ICpzcmMrKykpOyByZXR1cm4gZHN0IC0gMTsiICsgY2hyKDEwKSArCiAgICAifSIgKyBjaHIoMTApICsgY2hyKDEwKSArCiAgICAiLyogU2Ftc3VuZyBkZWJ1ZyBUU1Agc3ltYm9scyAqLyIgKyBjaHIoMTApICsKICAgICJjaGFyIF9fd2VhayBzZWNfZGVidWdfdHNwX2NvbW1hbmRfaGlzdG9yeVsxMDI0XTsiICsgY2hyKDEwKSArCiAgICAidm9pZCBfX3dlYWsgc2VjX3RzcF9yYXdfZGF0YV9jbGVhcih2b2lkKSB7fSIgKyBjaHIoMTApICsgY2hyKDEwKSArCiAgICAiLyogSVNQIGNhbWVyYSB2ZW5kb3Igc3R1YnMgKi8iICsgY2hyKDEwKSArCiAgICAiaW50IF9fd2VhayBpc192ZW5kZXJfcHJvYmUodm9pZCAqZCkgeyByZXR1cm4gMDsgfSIgKyBjaHIoMTApICsKICAgICJpbnQgX193ZWFrIGlzX3ZlbmRlcl9kdCh2b2lkICpkKSB7IHJldHVybiAwOyB9IiArIGNocigxMCkgKwogICAgImludCBfX3dlYWsgaXNfdmVuZGVyX3Jlc291cmNlX2dldCh2b2lkICpkKSB7IHJldHVybiAwOyB9IiArIGNocigxMCkgKwogICAgInZvaWQgX193ZWFrIGlzX3ZlbmRlcl9yZXNvdXJjZV9wdXQodm9pZCAqZCkge30iICsgY2hyKDEwKSArCiAgICAiaW50IF9fd2VhayBpc192ZW5kZXJfY2FsX2xvYWQodm9pZCAqZCwgdm9pZCAqcCkgeyByZXR1cm4gMDsgfSIgKyBjaHIoMTApICsKICAgICJpbnQgX193ZWFrIGlzX3ZlbmRlcl9zZXRmaWxlX3NlbCh2b2lkICpkLCBpbnQgcywgaW50IHApIHsgcmV0dXJuIDA7IH0iICsgY2hyKDEwKSArCiAgICAiaW50IF9fd2VhayBpc192ZW5kZXJfaXRmX29wZW4odm9pZCAqZCwgdm9pZCAqcCkgeyByZXR1cm4gMDsgfSIgKyBjaHIoMTApICsKICAgICJpbnQgX193ZWFrIGlzX3ZlbmRlcl9tb2R1bGVfc2VsKHZvaWQgKmQsIHZvaWQgKnApIHsgcmV0dXJuIDA7IH0iICsgY2hyKDEwKSArCiAgICAiaW50IF9fd2VhayBpc192ZW5kZXJfbW9kdWxlX2RlbCh2b2lkICpkLCB2b2lkICpwKSB7IHJldHVybiAwOyB9IiArIGNocigxMCkgKwogICAgInZvaWQgX193ZWFrIGlzX3ZlbmRlcl9zZXRfdG9yY2goaW50IHMpIHt9IiArIGNocigxMCkgKwogICAgImludCBfX3dlYWsgaXNfdmVuZGVyX3ZpZGVvX3NfY3RybCh2b2lkICpkLCB2b2lkICpjKSB7IHJldHVybiAwOyB9IiArIGNocigxMCkgKwogICAgImludCBfX3dlYWsgaXNfdmVuZGVyX3NzeF92aWRlb19nX2N0cmwodm9pZCAqZCwgdm9pZCAqYykgeyByZXR1cm4gMDsgfSIgKyBjaHIoMTApICsKICAgICJpbnQgX193ZWFrIGlzX3ZlbmRlcl9zc3hfdmlkZW9fc19jdHJsKHZvaWQgKmQsIHZvaWQgKmMpIHsgcmV0dXJuIDA7IH0iICsgY2hyKDEwKSArCiAgICAiaW50IF9fd2VhayBpc192ZW5kZXJfc2Vuc29yX2dwaW9fb24odm9pZCAqZCwgdm9pZCAqcCwgaW50IGksIGludCByKSB7IHJldHVybiAwOyB9IiArIGNocigxMCkgKwogICAgImludCBfX3dlYWsgaXNfdmVuZGVyX3NlbnNvcl9ncGlvX29uX3NlbCh2b2lkICpkLCB2b2lkICpwLCBpbnQgaSwgaW50IHIpIHsgcmV0dXJuIDA7IH0iICsgY2hyKDEwKSArCiAgICAiaW50IF9fd2VhayBpc192ZW5kZXJfc2Vuc29yX2dwaW9fb2ZmKHZvaWQgKmQsIHZvaWQgKnAsIGludCBpLCBpbnQgcikgeyByZXR1cm4gMDsgfSIgKyBjaHIoMTApICsKICAgICJpbnQgX193ZWFrIGlzX3ZlbmRlcl9zZW5zb3JfZ3Bpb19vZmZfc2VsKHZvaWQgKmQsIHZvaWQgKnAsIGludCBpLCBpbnQgcikgeyByZXR1cm4gMDsgfSIgKyBjaHIoMTApICsKICAgICJpbnQgX193ZWFrIGlzX3ZlbmRlcl9zZW5zb3Jfc19pbnB1dCh2b2lkICpkLCB2b2lkICpwKSB7IHJldHVybiAwOyB9IiArIGNocigxMCkgKwogICAgImludCBfX3dlYWsgaXNfdmVuZGVyX2NzaV9lcnJfaGFuZGxlcih2b2lkICpkLCB1MzIgZSkgeyByZXR1cm4gMDsgfSIgKyBjaHIoMTApICsKICAgICJpbnQgX193ZWFrIGlzX3ZlbmRvcl9jc2lfc3RyZWFtX29uKHZvaWQgKmQpIHsgcmV0dXJuIDA7IH0iICsgY2hyKDEwKSArCiAgICAiaW50IF9fd2VhayBpc192ZW5kb3JfY3NpX3N0cmVhbV9vZmYodm9pZCAqZCkgeyByZXR1cm4gMDsgfSIgKyBjaHIoMTApICsKICAgICJpbnQgX193ZWFrIGlzX3ZlbmRlcl9yZW1vdmVfZHVtcF9md19maWxlKHZvaWQpIHsgcmV0dXJuIDA7IH0iICsgY2hyKDEwKSArCiAgICAiaW50IF9fd2VhayBpc19nZXRfZHVhbF9jYWxfYnVmKGludCBzLCB2b2lkICoqYiwgdW5zaWduZWQgaW50ICpsKSB7IHJldHVybiAwOyB9IiArIGNocigxMCkgKwogICAgImludCBfX3dlYWsgaXNfZ2V0X3JlbW9zYWljX2NhbF9idWYoaW50IHMsIHZvaWQgKipiLCB1bnNpZ25lZCBpbnQgKmwpIHsgcmV0dXJuIDA7IH0iICsgY2hyKDEwKSArCiAgICAiaW50IF9fd2VhayBpc19zZWNfZ2V0X2h3X3BhcmFtKHZvaWQgKipwKSB7IHJldHVybiAwOyB9IiArIGNocigxMCkgKwogICAgIi8qIFN5bmFwdGljcyBURDQxNTAgbG9nZ2luZyAtIGNhbGxlZCBhcyBmdW5jdGlvbnMgbm90IG1hY3JvcyAqLyIgKyBjaHIoMTApICsKICAgICJ2b2lkIF9fd2VhayBMT0dEKGNvbnN0IGNoYXIgKmZtdCwgLi4uKSB7fSIgKyBjaHIoMTApICsKICAgICJ2b2lkIF9fd2VhayBMT0dFKGNvbnN0IGNoYXIgKmZtdCwgLi4uKSB7fSIgKyBjaHIoMTApICsKICAgICJ2b2lkIF9fd2VhayBMT0dOKGNvbnN0IGNoYXIgKmZtdCwgLi4uKSB7fSIgKyBjaHIoMTApICsKICAgICIvKiBVU0Igbm90aWZ5IGh3X3BhcmFtIC0gZGVmaW5lZCBpbiBzZWNfaHdfcGFyYW0uYyB3aGljaCBpcyBhYnNlbnQgaW4gT1NTICovIiArIGNocigxMCkgKwogICAgImludCBfX3dlYWsgaW5jX2h3X3BhcmFtKHZvaWQgKm8sIGludCBpbmRleCkgeyByZXR1cm4gMDsgfSIgKyBjaHIoMTApICsKICAgICIvKiBzZWNfZGVidWdfYmFzZSBzdHVicyAtIHJlZmVyZW5jZWQgYnkgd2F0Y2hkb2cvc3lzcnEvcmVib290IHdoZW4gU0VDX0RFQlVHPW4gKi8iICsgY2hyKDEwKSArCiAgICAidm9pZCBfX3dlYWsgc2VjZGJnX2Jhc2Vfc2V0X3Rhc2tfaW5fc29mdF9sb2NrdXAodTY0IGFkZHIpIHt9IiArIGNocigxMCkgKwogICAgInZvaWQgX193ZWFrIHNlY2RiZ19iYXNlX3NldF9jcHVfaW5fc29mdF9sb2NrdXAodTY0IGFkZHIpIHt9IiArIGNocigxMCkgKwogICAgInZvaWQgX193ZWFrIHNlY2RiZ19iYXNlX3NldF9jcHVfaW5faGFyZF9sb2NrdXAodTY0IGFkZHIpIHt9IiArIGNocigxMCkgKwogICAgInZvaWQgX193ZWFrIHNlY2RiZ19iYXNlX3NldF90YXNrX2luX2hhcmRfbG9ja3VwKHU2NCBhZGRyKSB7fSIgKyBjaHIoMTApICsKICAgICJ2b2lkIF9fd2VhayBzZWNkYmdfYmFzZV9zZXRfc3lzcnFfY3Jhc2godm9pZCkge30iICsgY2hyKDEwKSArCiAgICAidm9pZCBfX3dlYWsgc2VjZGJnX2Jhc2VfY2xlYXJfbWFnaWNfcmFtYmFzZSh2b2lkKSB7fSIgKyBjaHIoMTApICsKICAgICJ2b2lkIF9fd2VhayBzZWNkYmdfbW9kZV9lbnRlcl91cGxvYWQodm9pZCkge30iICsgY2hyKDEwKQopCgpvcGVuKHN0dWJzX3BhdGgsICd3Jykud3JpdGUoc3R1YnNfY29udGVudCkKcHJpbnQoJ0NyZWF0ZWQ6ICcgKyBzdHVic19wYXRoKQoKIyBBZGQgdG8gZHJpdmVycy9zYW1zdW5nL01ha2VmaWxlCnNhbV9tZiA9ICdkcml2ZXJzL3NhbXN1bmcvTWFrZWZpbGUnCmlmIG9zLnBhdGguZXhpc3RzKHNhbV9tZik6CiAgICBzcmMgPSBvcGVuKHNhbV9tZikucmVhZCgpCiAgICBpZiAnc2Ftc3VuZ19vc3Nfc3R1YnMnIG5vdCBpbiBzcmM6CiAgICAgICAgb3BlbihzYW1fbWYsICdhJykud3JpdGUoY2hyKDEwKSArICdvYmoteSArPSBzYW1zdW5nX29zc19zdHVicy5vJyArIGNocigxMCkpCiAgICAgICAgcHJpbnQoJ0FkZGVkIHNhbXN1bmdfb3NzX3N0dWJzLm8gdG8gZHJpdmVycy9zYW1zdW5nL01ha2VmaWxlJykKZWxzZToKICAgIG9wZW4oc2FtX21mLCAndycpLndyaXRlKCdvYmoteSArPSBzYW1zdW5nX29zc19zdHVicy5vJyArIGNocigxMCkpCiAgICBwcmludCgnQ3JlYXRlZCBkcml2ZXJzL3NhbXN1bmcvTWFrZWZpbGUgd2l0aCBzdHVicycpCgpwcmludCgnU2Ftc3VuZyBPU1Mgc3R1YnMgY3JlYXRlZCcpCg==" | base64 -d | python3
-        # Remove usb_notifier.c from Makefile - Samsung charger/MUIC init causes kernel panic
-        # at boot because battery/power_supply APIs are absent in OSS source.
-        # usb_notify.c (core USB notify layer) stays compiled - it's what USB_NOTIFY_LAYER needs.
-        echo "aW1wb3J0IG9zCgojIFJlbW92ZSB1c2Jfbm90aWZpZXIuYyBmcm9tIE1ha2VmaWxlIC0gU2Ftc3VuZyBjaGFyZ2VyL01VSUMgaW50ZWdyYXRpb24sCiMgY2FsbHMgYmF0dGVyeS9wb3dlcl9zdXBwbHkgQVBJcyBhYnNlbnQgaW4gT1NTID0+IGtlcm5lbCBwYW5pYyBhdCBib290LgojIHVzYl9ub3RpZnkuYyAodGhlIGNvcmUgVVNCIG5vdGlmeSBsYXllcikgc3RheXMgYW5kIHdvcmtzIGZpbmUuCm5vdGlmeV9tZiA9ICdkcml2ZXJzL3VzYi9ub3RpZnkvTWFrZWZpbGUnCmlmIG9zLnBhdGguZXhpc3RzKG5vdGlmeV9tZik6CiAgICBzcmMgPSBvcGVuKG5vdGlmeV9tZikucmVhZCgpCiAgICBpZiAndXNiX25vdGlmaWVyJyBpbiBzcmM6CiAgICAgICAgbGluZXMgPSBzcmMuc3BsaXRsaW5lcyhrZWVwZW5kcz1UcnVlKQogICAgICAgIGNoYW5nZWQgPSAwCiAgICAgICAgZm9yIGksIGxpbmUgaW4gZW51bWVyYXRlKGxpbmVzKToKICAgICAgICAgICAgaWYgJ3VzYl9ub3RpZmllcicgaW4gbGluZSBhbmQgbm90IGxpbmUubHN0cmlwKCkuc3RhcnRzd2l0aCgnIycpOgogICAgICAgICAgICAgICAgbGluZXNbaV0gPSAnIyBQQVRDSEVEX09VVDogJyArIGxpbmUKICAgICAgICAgICAgICAgIGNoYW5nZWQgKz0gMQogICAgICAgIGlmIGNoYW5nZWQ6CiAgICAgICAgICAgIG9wZW4obm90aWZ5X21mLCAndycpLndyaXRlbGluZXMobGluZXMpCiAgICAgICAgICAgIHByaW50KG5vdGlmeV9tZiArICc6IHJlbW92ZWQgdXNiX25vdGlmaWVyICgnICsgc3RyKGNoYW5nZWQpICsgJyBsaW5lcyknKQogICAgICAgIGVsc2U6CiAgICAgICAgICAgIHByaW50KG5vdGlmeV9tZiArICc6IHVzYl9ub3RpZmllciBub3QgaW4gb2JqIGxpc3QnKQogICAgZWxzZToKICAgICAgICBwcmludChub3RpZnlfbWYgKyAnOiB1c2Jfbm90aWZpZXIgbm90IGZvdW5kJykKZWxzZToKICAgIHByaW50KCd1c2Jfbm90aWZpZXIgTWFrZWZpbGU6IE5PVCBGT1VORCwgc2VhcmNoaW5nLi4uJykKICAgIGZvciByb290LCBkaXJzLCBmaWxlcyBpbiBvcy53YWxrKCdkcml2ZXJzL3VzYi9ub3RpZnknKToKICAgICAgICBpZiAnTWFrZWZpbGUnIGluIGZpbGVzOgogICAgICAgICAgICBtZiA9IG9zLnBhdGguam9pbihyb290LCAnTWFrZWZpbGUnKQogICAgICAgICAgICBzcmMgPSBvcGVuKG1mKS5yZWFkKCkKICAgICAgICAgICAgaWYgJ3VzYl9ub3RpZmllcicgaW4gc3JjOgogICAgICAgICAgICAgICAgbGluZXMgPSBzcmMuc3BsaXRsaW5lcyhrZWVwZW5kcz1UcnVlKQogICAgICAgICAgICAgICAgY2hhbmdlZCA9IDAKICAgICAgICAgICAgICAgIGZvciBpLCBsaW5lIGluIGVudW1lcmF0ZShsaW5lcyk6CiAgICAgICAgICAgICAgICAgICAgaWYgJ3VzYl9ub3RpZmllcicgaW4gbGluZSBhbmQgbm90IGxpbmUubHN0cmlwKCkuc3RhcnRzd2l0aCgnIycpOgogICAgICAgICAgICAgICAgICAgICAgICBsaW5lc1tpXSA9ICcjIFBBVENIRURfT1VUOiAnICsgbGluZQogICAgICAgICAgICAgICAgICAgICAgICBjaGFuZ2VkICs9IDEKICAgICAgICAgICAgICAgIGlmIGNoYW5nZWQ6CiAgICAgICAgICAgICAgICAgICAgb3BlbihtZiwgJ3cnKS53cml0ZWxpbmVzKGxpbmVzKQogICAgICAgICAgICAgICAgICAgIHByaW50KG1mICsgJzogcmVtb3ZlZCB1c2Jfbm90aWZpZXIgKCcgKyBzdHIoY2hhbmdlZCkgKyAnIGxpbmVzKScpCg==" | base64 -d | python3
+        # usb_notifier.c: DT has usb_notifier node + it is in platform_drivers
+        # Now that BATTERY_SAMSUNG/SM5714 are enabled, psy_do_property will be available
+        # Keeping usb_notifier.c in Makefile (no removal needed)
 
         # Fix s2mpu12-key.c: pmic_key_is_pwron is a Samsung battery variable - relocation error
-        echo "aW1wb3J0IG9zLCByZQpmID0gJ2RyaXZlcnMvaW5wdXQva2V5Ym9hcmQvczJtcHUxMi1rZXkuYycKaWYgb3MucGF0aC5leGlzdHMoZik6CiAgICBzcmMgPSBvcGVuKGYpLnJlYWQoKQogICAgcGF0Y2hlZCA9IHJlLnN1YihyJ3BtaWNfa2V5X2lzX3B3cm9uWyhdW14pXSpbKV0nLCAnKDApJywgc3JjKQogICAgcGF0Y2hlZCA9IHJlLnN1YihyJwhwbWljX2tleV9pc19wd3JvbggnLCAnMCcsIHBhdGNoZWQpCiAgICBpZiBwYXRjaGVkICE9IHNyYzoKICAgICAgICBvcGVuKGYsICd3Jykud3JpdGUocGF0Y2hlZCkKICAgICAgICBwcmludCgnczJtcHUxMi1rZXkuYzogcGF0Y2hlZCBwbWljX2tleV9pc19wd3JvbicpCiAgICBlbHNlOgogICAgICAgIHByaW50KCdzMm1wdTEyLWtleS5jOiBhbHJlYWR5IHBhdGNoZWQnKQplbHNlOgogICAgcHJpbnQoJ3MybXB1MTIta2V5LmM6IG5vdCBmb3VuZCcpCg==" | base64 -d | python3
+        echo "aW1wb3J0IG9zCmYgPSAnZHJpdmVycy9pbnB1dC9rZXlib2FyZC9NYWtlZmlsZScKaWYgb3MucGF0aC5leGlzdHMoZik6CiAgICBzcmMgPSBvcGVuKGYpLnJlYWQoKQogICAgaWYgJ3MybXB1MTIta2V5JyBpbiBzcmM6CiAgICAgICAgbGluZXMgPSBzcmMuc3BsaXRsaW5lcyhrZWVwZW5kcz1UcnVlKQogICAgICAgIGNoYW5nZWQgPSAwCiAgICAgICAgZm9yIGksIGxpbmUgaW4gZW51bWVyYXRlKGxpbmVzKToKICAgICAgICAgICAgaWYgJ3MybXB1MTIta2V5JyBpbiBsaW5lIGFuZCBub3QgbGluZS5sc3RyaXAoKS5zdGFydHN3aXRoKCcjJyk6CiAgICAgICAgICAgICAgICBsaW5lc1tpXSA9ICcjIFBBVENIRURfT1VUOiAnICsgbGluZQogICAgICAgICAgICAgICAgY2hhbmdlZCArPSAxCiAgICAgICAgaWYgY2hhbmdlZDoKICAgICAgICAgICAgb3BlbihmLCAndycpLndyaXRlbGluZXMobGluZXMpCiAgICAgICAgICAgIHByaW50KCdrZXlib2FyZC9NYWtlZmlsZTogcmVtb3ZlZCBzMm1wdTEyLWtleSAoJyArIHN0cihjaGFuZ2VkKSArICcgbGluZXMpJykKICAgICAgICBlbHNlOgogICAgICAgICAgICBwcmludCgna2V5Ym9hcmQvTWFrZWZpbGU6IHMybXB1MTIta2V5IGFscmVhZHkgY29tbWVudGVkJykKICAgIGVsc2U6CiAgICAgICAgcHJpbnQoJ2tleWJvYXJkL01ha2VmaWxlOiBzMm1wdTEyLWtleSBub3QgZm91bmQnKQplbHNlOgogICAgcHJpbnQoJ2tleWJvYXJkL01ha2VmaWxlOiBub3QgZm91bmQnKQo=" | base64 -d | python3
 
         # Fix usb_notifier.c: psy_do_property is a Samsung battery-driver macro not in OSS
         # Without it the compiler sees 'set' as an undeclared identifier (lines ~593, ~632)
@@ -164,6 +163,12 @@ jobs:
         # USB_ANDROID_SAMSUNG_COMPOSITE kept enabled
         scripts/config --disable CONFIG_SHUB             2>/dev/null || true
         scripts/config --disable CONFIG_SHUB_IIO         2>/dev/null || true
+        # TZDEV + TEEGRIS ecosystem - ALL required on Exynos850
+        # teegris, tee, tzdev are all separate platform devices that need drivers
+        scripts/config --enable  CONFIG_TZLOG                        2>/dev/null || true
+        scripts/config --set-val CONFIG_TZLOG_PG_CNT            8    2>/dev/null || true
+        scripts/config --enable  CONFIG_TZIRS                        2>/dev/null || true
+        scripts/config --set-val CONFIG_TEEGRIS_VERSION         4    2>/dev/null || true
         # TZDEV - Samsung TrustZone driver - REQUIRED on Exynos850
         # Without it, TZ Secure World triggers IWI_PANIC (IRQ 469) after ~5s
         scripts/config --enable  CONFIG_TZDEV                        2>/dev/null || true
@@ -177,8 +182,8 @@ jobs:
         scripts/config --enable  CONFIG_TZDEV_KTHREADS_SMPBOOT       2>/dev/null || true
         scripts/config --enable  CONFIG_TZIC                         2>/dev/null || true
         scripts/config --enable  CONFIG_TZIC_USE_TZDEV               2>/dev/null || true
-        # Disable Samsung debug drivers that access Samsung-specific memory at init
-        # These are safe to disable for boot testing
+        # Disable Samsung sec_debug drivers - they access Samsung-specific memory
+        # regions at fixed addresses that differ in OSS kernel (safe to disable for boot)
         scripts/config --disable CONFIG_SEC_DEBUG            2>/dev/null || true
         scripts/config --disable CONFIG_SEC_DEBUG_SUMMARY    2>/dev/null || true
         scripts/config --disable CONFIG_SEC_DEBUG_EXTRA_INFO 2>/dev/null || true
@@ -187,26 +192,19 @@ jobs:
         scripts/config --disable CONFIG_SEC_DEBUG_LAST_KMSG  2>/dev/null || true
         scripts/config --disable CONFIG_SEC_DEBUG_INIT_LOG   2>/dev/null || true
         scripts/config --disable CONFIG_SEC_DEBUG_FIRST2M_LOG 2>/dev/null || true
-        # Disable ALL Samsung hardware drivers that probe at init - for diagnosis only
-        # These all have module_init that access Samsung-specific hardware/memory
-        scripts/config --disable CONFIG_TZDEV               2>/dev/null || true
-        scripts/config --disable CONFIG_MFD_SM5714          2>/dev/null || true
-        scripts/config --disable CONFIG_BATTERY_SAMSUNG     2>/dev/null || true
-        scripts/config --disable CONFIG_CHARGER_SM5714      2>/dev/null || true
-        scripts/config --disable CONFIG_FUELGAUGE_SM5714    2>/dev/null || true
-        scripts/config --disable CONFIG_MUIC_SM5714         2>/dev/null || true
-        scripts/config --disable CONFIG_PDIC_SM5714         2>/dev/null || true
-        scripts/config --disable CONFIG_MUIC_NOTIFIER       2>/dev/null || true
-        scripts/config --disable CONFIG_VBUS_NOTIFIER       2>/dev/null || true
-        scripts/config --disable CONFIG_PDIC_NOTIFIER       2>/dev/null || true
-        scripts/config --disable CONFIG_USB_TYPEC_MANAGER_NOTIFIER 2>/dev/null || true
-        scripts/config --disable CONFIG_IF_CB_MANAGER       2>/dev/null || true
-        scripts/config --disable CONFIG_USB_HOST_NOTIFY     2>/dev/null || true
-        scripts/config --disable CONFIG_USB_EXTERNAL_NOTIFY 2>/dev/null || true
-        scripts/config --disable CONFIG_USB_HW_PARAM        2>/dev/null || true
-        scripts/config --disable CONFIG_ARGOS               2>/dev/null || true
-        scripts/config --disable CONFIG_SEC_ABC             2>/dev/null || true
-        scripts/config --disable CONFIG_SENSORS_SSP         2>/dev/null || true
+        # SM5714 PMIC - main power management chip on SM-M127F
+        scripts/config --enable  CONFIG_MFD_SM5714          2>/dev/null || true
+        scripts/config --enable  CONFIG_CHARGER_SM5714      2>/dev/null || true
+        scripts/config --enable  CONFIG_FUELGAUGE_SM5714    2>/dev/null || true
+        scripts/config --enable  CONFIG_LEDS_SM5714         2>/dev/null || true
+        scripts/config --enable  CONFIG_MUIC_SM5714         2>/dev/null || true
+        scripts/config --enable  CONFIG_MUIC_NOTIFIER       2>/dev/null || true
+        scripts/config --enable  CONFIG_USE_MUIC            2>/dev/null || true
+        scripts/config --enable  CONFIG_VBUS_NOTIFIER       2>/dev/null || true
+        scripts/config --enable  CONFIG_PDIC_SM5714         2>/dev/null || true
+        scripts/config --enable  CONFIG_PDIC_NOTIFIER       2>/dev/null || true
+        scripts/config --enable  CONFIG_USB_TYPEC_MANAGER_NOTIFIER 2>/dev/null || true
+        scripts/config --enable  CONFIG_BATTERY_SAMSUNG     2>/dev/null || true
         scripts/config --enable  CONFIG_ANDROID_BINDERFS   2>/dev/null || true
         # F2FS compression - /data is mounted with compress_algorithm=lzo (confirmed from physwizz)
         # Without this /data cannot be mounted => Android never boots
