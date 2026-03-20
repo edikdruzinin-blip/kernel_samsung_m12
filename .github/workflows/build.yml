@@ -236,6 +236,28 @@ jobs:
         scripts/config --enable  CONFIG_CRYPTO_LZO          2>/dev/null || true
         # Panic on oops - forces fast reboot + ramoops entry instead of infinite hang
         scripts/config --enable  CONFIG_PANIC_ON_OOPS       2>/dev/null || true
+        # Display - panel drivers required for Android to have a screen
+        # Without these: bootloader shows Samsung logo but Android display stays dark
+        scripts/config --enable  CONFIG_EXYNOS_DECON_LCD              2>/dev/null || true
+        scripts/config --enable  CONFIG_EXYNOS_DECON_LCD_SYSFS        2>/dev/null || true
+        scripts/config --enable  CONFIG_EXYNOS_DECON_LCD_ILI9882N_M12S 2>/dev/null || true
+        scripts/config --enable  CONFIG_EXYNOS_DECON_LCD_NT36675_M12  2>/dev/null || true
+        scripts/config --enable  CONFIG_EXYNOS_DECON_LCD_ILI7806S_M12 2>/dev/null || true
+        scripts/config --enable  CONFIG_PANEL_AID_DIMMING             2>/dev/null || true
+        # Fingerprint (side power button) - GW3X is Samsung LSI in-button sensor
+        scripts/config --enable  CONFIG_SENSORS_FINGERPRINT           2>/dev/null || true
+        scripts/config --enable  CONFIG_FINGERPRINT_SECURE            2>/dev/null || true
+        scripts/config --enable  CONFIG_SENSORS_FINGERPRINT_LSI       2>/dev/null || true
+        scripts/config --enable  CONFIG_SENSORS_GW3X                  2>/dev/null || true
+        # Camera sensors - all 5 cameras on SM-M127F
+        scripts/config --enable  CONFIG_IS_DDK_DATA_LOAD              2>/dev/null || true
+        scripts/config --enable  CONFIG_CAMERA_MMT_V12                2>/dev/null || true
+        scripts/config --enable  CONFIG_CAMERA_CIS_SR846_OBJ          2>/dev/null || true
+        scripts/config --enable  CONFIG_CAMERA_CIS_GC5035_OBJ         2>/dev/null || true
+        scripts/config --enable  CONFIG_CAMERA_CIS_GM2_OBJ            2>/dev/null || true
+        scripts/config --enable  CONFIG_CAMERA_CIS_GC02M1_OBJ         2>/dev/null || true
+        scripts/config --enable  CONFIG_CAMERA_ACT_FP5529_OBJ         2>/dev/null || true
+        scripts/config --enable  CONFIG_CAMERA_FLASH_SM5714_OBJ       2>/dev/null || true
         # Boot-critical enables
         scripts/config --enable  CONFIG_ARM64_VA_BITS_39 2>/dev/null || true
         scripts/config --disable CONFIG_ARM64_VA_BITS_48 2>/dev/null || true
