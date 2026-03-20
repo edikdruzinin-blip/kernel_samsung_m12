@@ -218,6 +218,14 @@ jobs:
         scripts/config --enable  CONFIG_F2FS_FS_COMPRESSION 2>/dev/null || true
         scripts/config --enable  CONFIG_F2FS_FS_LZO         2>/dev/null || true
         scripts/config --enable  CONFIG_F2FS_FS_LZ4         2>/dev/null || true
+        # ZRAM - device uses 2.5GB ZRAM swap (confirmed from /proc/swaps)
+        # Without ZRAM, Android init fails to setup swap -> performance issues or bootloop
+        scripts/config --enable  CONFIG_ZSMALLOC            2>/dev/null || true
+        scripts/config --enable  CONFIG_ZRAM                2>/dev/null || true
+        scripts/config --enable  CONFIG_ZRAM_WRITEBACK      2>/dev/null || true
+        scripts/config --enable  CONFIG_LZO_COMPRESS        2>/dev/null || true
+        scripts/config --enable  CONFIG_LZ4_COMPRESS        2>/dev/null || true
+        scripts/config --enable  CONFIG_CRYPTO_LZO          2>/dev/null || true
         # Panic on oops - forces fast reboot + ramoops entry instead of infinite hang
         scripts/config --enable  CONFIG_PANIC_ON_OOPS       2>/dev/null || true
         # Boot-critical enables
