@@ -212,7 +212,11 @@ jobs:
         scripts/config --enable  CONFIG_USE_MUIC            2>/dev/null || true
         scripts/config --enable  CONFIG_VBUS_NOTIFIER       2>/dev/null || true
         scripts/config --enable  CONFIG_PDIC_SM5714         2>/dev/null || true
-        scripts/config --enable  CONFIG_PDIC_NOTIFIER       2>/dev/null || true
+        # Disable PDIC_NOTIFIER - its headers conflict with IFCONN headers
+        # USB PD negotiation not needed for basic boot
+        scripts/config --disable CONFIG_PDIC_NOTIFIER                2>/dev/null || true
+        scripts/config --disable CONFIG_USB_TYPEC_MANAGER_NOTIFIER   2>/dev/null || true
+        scripts/config --disable CONFIG_PDIC_SM5714                  2>/dev/null || true
         scripts/config --enable  CONFIG_USB_TYPEC_MANAGER_NOTIFIER 2>/dev/null || true
         # Disable entire drivers/battery/ subtree - all files include sec_battery.h
         # which pulls pdic_notifier.h conflicting with ifconn_notifier.h
@@ -300,12 +304,12 @@ jobs:
         cd kernel
         # Собираем с сохранением полного лога
         # Build kernel Image
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld KCFLAGS="-w -Wno-error" KBUILD_LDFLAGS="--allow-multiple-definition" -j$(nproc) Image 2>&1 | tee /tmp/full_build.log
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld KCFLAGS="-w -Wno-error" KCPPFLAGS="-D__PDIC_NOTIFIER_H__ -D__IFCONN_RID_DEFINED -D__PDIC_NOTIFIER_DATA_DEFINED" KBUILD_LDFLAGS="--allow-multiple-definition" -j$(nproc) Image 2>&1 | tee /tmp/full_build.log
         BUILD_RESULT_IMG=${PIPESTATUS[0]}
 
         # Build kernel modules (.ko) — best-effort, partial failures from firmware deps are expected
         # -k: keep going past individual errors; || true: never fail this step
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld KCFLAGS="-w -Wno-error" KBUILD_LDFLAGS="--allow-multiple-definition" -j$(nproc) -k modules 2>&1 | tee -a /tmp/full_build.log || true
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld KCFLAGS="-w -Wno-error" KCPPFLAGS="-D__PDIC_NOTIFIER_H__ -D__IFCONN_RID_DEFINED -D__PDIC_NOTIFIER_DATA_DEFINED" KBUILD_LDFLAGS="--allow-multiple-definition" -j$(nproc) -k modules 2>&1 | tee -a /tmp/full_build.log || true
 
         # Install whatever modules did build (strip debug symbols) — also best-effort
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache ${{ env.CLANG_PATH }}/clang" CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld modules_install INSTALL_MOD_PATH=../modules_staging INSTALL_MOD_STRIP=1 2>&1 || true
