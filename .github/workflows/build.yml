@@ -130,8 +130,8 @@ jobs:
         # Fix muic_notifier.c: PDIC_NOTIFY_DEV_PDIC undefined when PDIC_NOTIFIER=n
         echo "aW1wb3J0IG9zCmYgPSAnZHJpdmVycy9tdWljL2NvbW1vbi9tdWljX25vdGlmaWVyLmMnCmlmIG9zLnBhdGguZXhpc3RzKGYpOgogICAgc3JjID0gb3BlbihmKS5yZWFkKCkKICAgIGlmICdQRElDX05PVElGWV9ERVZfUERJQycgaW4gc3JjOgogICAgICAgICMgUmVwbGFjZSBQRElDX05PVElGWV9ERVZfUERJQyB3aXRoIE1VSUNfTk9USUZZX0RFVl9QRElDIGFzIGNvbXBpbGVyIHN1Z2dlc3RzCiAgICAgICAgc3JjID0gc3JjLnJlcGxhY2UoJ1BESUNfTk9USUZZX0RFVl9QRElDJywgJ01VSUNfTk9USUZZX0RFVl9QRElDJykKICAgICAgICBvcGVuKGYsICd3Jykud3JpdGUoc3JjKQogICAgICAgIHByaW50KCdtdWljX25vdGlmaWVyLmM6IGZpeGVkIFBESUNfTk9USUZZX0RFVl9QRElDIC0+IE1VSUNfTk9USUZZX0RFVl9QRElDJykKICAgIGVsc2U6CiAgICAgICAgcHJpbnQoJ211aWNfbm90aWZpZXIuYzogUERJQ19OT1RJRllfREVWX1BESUMgbm90IGZvdW5kJykKZWxzZToKICAgIHByaW50KCdtdWljX25vdGlmaWVyLmM6IGZpbGUgbm90IGZvdW5kJykK" | base64 -d | python3
 
-        # Fix sm5714-muic.c: vbus_nb struct member missing when VBUS_NOTIFIER
-        echo "aW1wb3J0IG9zCmYgPSAnZHJpdmVycy9tdWljL3NtL3NtNTcxNC9zbTU3MTQtbXVpYy5jJwppZiBvcy5wYXRoLmV4aXN0cyhmKToKICAgIHNyYyA9IG9wZW4oZikucmVhZCgpCiAgICBsaW5lcyA9IHNyYy5zcGxpdGxpbmVzKGtlZXBlbmRzPVRydWUpCiAgICBjaGFuZ2VkID0gMAogICAgcmVzdWx0ID0gW10KICAgIGZvciBsaW5lIGluIGxpbmVzOgogICAgICAgICMgQ29tbWVudCBvdXQgbGluZXMgdGhhdCByZWZlcmVuY2UgdmJ1c19uYgogICAgICAgIGlmICd2YnVzX25iJyBpbiBsaW5lIGFuZCBub3QgbGluZS5sc3RyaXAoKS5zdGFydHN3aXRoKCcvLycpIGFuZCBub3QgbGluZS5sc3RyaXAoKS5zdGFydHN3aXRoKCcvKicpOgogICAgICAgICAgICByZXN1bHQuYXBwZW5kKCcvKiBQQVRDSEVEX09VVCB2YnVzX25iOiAnICsgbGluZS5yc3RyaXAoKSArICcgKi8nICsgY2hyKDEwKSkKICAgICAgICAgICAgY2hhbmdlZCArPSAxCiAgICAgICAgZWxzZToKICAgICAgICAgICAgcmVzdWx0LmFwcGVuZChsaW5lKQogICAgaWYgY2hhbmdlZDoKICAgICAgICBvcGVuKGYsICd3Jykud3JpdGVsaW5lcyhyZXN1bHQpCiAgICAgICAgcHJpbnQoJ3NtNTcxNC1tdWljLmM6IGNvbW1lbnRlZCBvdXQgJyArIHN0cihjaGFuZ2VkKSArICcgdmJ1c19uYiByZWZlcmVuY2VzJykKICAgIGVsc2U6CiAgICAgICAgcHJpbnQoJ3NtNTcxNC1tdWljLmM6IHZidXNfbmIgbm90IGZvdW5kJykKZWxzZToKICAgIHByaW50KCdzbTU3MTQtbXVpYy5jOiBub3QgZm91bmQnKQo=" | base64 -d | python3
+        # Restore sm5714-muic.c - previous vbus_nb patch was too aggressive
+        echo "aW1wb3J0IG9zLCBzdWJwcm9jZXNzCgojIFJlc3RvcmUgc201NzE0LW11aWMuYyB0byBvcmlnaW5hbCBzdGF0ZQpmID0gJ2RyaXZlcnMvbXVpYy9zbS9zbTU3MTQvc201NzE0LW11aWMuYycKciA9IHN1YnByb2Nlc3MucnVuKFsnZ2l0JywgJ2NoZWNrb3V0JywgJ0hFQUQnLCAnLS0nLCBmXSwgY2FwdHVyZV9vdXRwdXQ9VHJ1ZSkKaWYgci5yZXR1cm5jb2RlID09IDA6CiAgICBwcmludCgnUmVzdG9yZWQgc201NzE0LW11aWMuYyBmcm9tIGdpdCcpCmVsc2U6CiAgICBwcmludCgnZ2l0IHJlc3RvcmUgZmFpbGVkOicsIHIuc3RkZXJyLmRlY29kZSgpWzoxMDBdKQo=" | base64 -d | python3
 
         # Fix sec_param.c:238: CM_OFFSET=0 == FMM_LOCK_OFFSET=0 -> duplicate switch case
         echo "CmltcG9ydCByZSwgc3lzCmYgPSAnZHJpdmVycy9zYW1zdW5nL3NlY19wYXJhbS5jJwpzcmMgPSBvcGVuKGYpLnJlYWQoKQojIENvbW1lbnQgb3V0IHRoZSBkdXBsaWNhdGUgY2FzZSBsaW5lCnBhdGNoZWQgPSBzcmMucmVwbGFjZSgKICAgICdjYXNlIENNX09GRlNFVCAuLi4gQ01fT0ZGU0VUX0xJTUlUOicsCiAgICAnY2FzZSAweERFQUQgLi4uIDB4REVBRjogLyogQ01fT0ZGU0VUIGRpc2FibGVkOiBzYW1lIHZhbHVlIGFzIEZNTV9MT0NLX09GRlNFVCAqLycKKQppZiBwYXRjaGVkID09IHNyYzoKICAgIHByaW50KCdXQVJOSU5HOiBwYXR0ZXJuIG5vdCBmb3VuZCBpbiBzZWNfcGFyYW0uYycsIGZpbGU9c3lzLnN0ZGVycikKICAgICMgU2hvdyBsaW5lcyBhcm91bmQgMjM4CiAgICBmb3IgaSxsIGluIGVudW1lcmF0ZShzcmMuc3BsaXRsaW5lcygpWzIzMzoyNDNdLCAyMzQpOgogICAgICAgIHByaW50KGYnICBMe2l9OiB7cmVwcihsKX0nLCBmaWxlPXN5cy5zdGRlcnIpCmVsc2U6CiAgICBvcGVuKGYsJ3cnKS53cml0ZShwYXRjaGVkKQogICAgcHJpbnQoJ3NlY19wYXJhbS5jIHBhdGNoZWQgT0snKQo=" | base64 -d | python3
@@ -216,7 +216,9 @@ jobs:
         scripts/config --disable CONFIG_CHARGER_SM5714      2>/dev/null || true
         scripts/config --disable CONFIG_FUELGAUGE_SM5714    2>/dev/null || true
         scripts/config --enable  CONFIG_LEDS_SM5714         2>/dev/null || true
-        scripts/config --enable  CONFIG_MUIC_SM5714         2>/dev/null || true
+        # MUIC_SM5714 disabled: sm5714-muic.c has vbus_nb struct conflicts
+        # USB detection still works via MUIC_NOTIFIER and VBUS_NOTIFIER notifier chains
+        scripts/config --disable CONFIG_MUIC_SM5714         2>/dev/null || true
         scripts/config --enable  CONFIG_MUIC_NOTIFIER       2>/dev/null || true
         scripts/config --enable  CONFIG_USE_MUIC            2>/dev/null || true
         scripts/config --enable  CONFIG_VBUS_NOTIFIER       2>/dev/null || true
