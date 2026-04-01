@@ -139,6 +139,40 @@ jobs:
         echo "aW1wb3J0IG9zCmYgPSAnZHJpdmVycy9zZW5zb3JodWIvY29tbS9zaHViX2lpby5jJwppZiBvcy5wYXRoLmV4aXN0cyhmKToKICAgIHNyYyA9IG9wZW4oZikucmVhZCgpCiAgICBpbmMgPSAnI2luY2x1ZGUgPGxpbnV4L2lpby9idWZmZXIuaD4nCiAgICBpZiBpbmMgbm90IGluIHNyYzoKICAgICAgICBvcGVuKGYsJ3cnKS53cml0ZShpbmMgKyBjaHIoMTApICsgc3JjKQogICAgICAgIHByaW50KCdzaHViX2lpby5jOiBhZGRlZCBpaW8vYnVmZmVyLmggaW5jbHVkZScpCiAgICBlbHNlOgogICAgICAgIHByaW50KCdzaHViX2lpby5jOiBhbHJlYWR5IGhhcyBpaW8vYnVmZmVyLmgnKQplbHNlOgogICAgcHJpbnQoJ25vdCBmb3VuZDogJyArIGYpCg==" | base64 -d | python3
         # Fix panel *_i2c.h: struct i2c_data incomplete type - add stub
         echo "aW1wb3J0IG9zCgpTVFVCID0gKAogICAgIiNpZm5kZWYgX19QQU5FTF9JMkNfREFUQV9TVFVCX18iICsgY2hyKDEwKSArCiAgICAiI2RlZmluZSBfX1BBTkVMX0kyQ19EQVRBX1NUVUJfXyIgKyBjaHIoMTApICsKICAgICJzdHJ1Y3QgaTJjX2RhdGEgeyIgKyBjaHIoMTApICsKICAgICIgICAgdW5zaWduZWQgY2hhciBhZGRyOyIgKyBjaHIoMTApICsKICAgICIgICAgdW5zaWduZWQgaW50IHNpemU7IiArIGNocigxMCkgKwogICAgIiAgICB1bnNpZ25lZCBjaGFyICpidWY7IiArIGNocigxMCkgKwogICAgIn07IiArIGNocigxMCkgKwogICAgIiNlbmRpZiIgKyBjaHIoMTApICsgY2hyKDEwKQopCgpmb3Igcm9vdCwgZGlycywgZmlsZXMgaW4gb3Mud2FsaygiZHJpdmVycy92aWRlby9mYmRldi9leHlub3MvcGFuZWwiKToKICAgIGZvciBmbiBpbiBmaWxlczoKICAgICAgICBpZiAiX2kyYyIgaW4gZm4gYW5kIGZuLmVuZHN3aXRoKCIuaCIpOgogICAgICAgICAgICBmcCA9IG9zLnBhdGguam9pbihyb290LCBmbikKICAgICAgICAgICAgdHJ5OgogICAgICAgICAgICAgICAgc3JjID0gb3BlbihmcCkucmVhZCgpCiAgICAgICAgICAgIGV4Y2VwdDoKICAgICAgICAgICAgICAgIGNvbnRpbnVlCiAgICAgICAgICAgIGlmICJfX1BBTkVMX0kyQ19EQVRBX1NUVUJfXyIgbm90IGluIHNyYyBhbmQgInN0cnVjdCBpMmNfZGF0YSIgaW4gc3JjOgogICAgICAgICAgICAgICAgb3BlbihmcCwgInciKS53cml0ZShTVFVCICsgc3JjKQogICAgICAgICAgICAgICAgcHJpbnQoZnAgKyAiOiBhZGRlZCBpMmNfZGF0YSBzdHViIikKcHJpbnQoInBhbmVsX2kyYyBzdHViIGRvbmUiKQo=" | base64 -d | python3
+
+        # Fix all panel i2c headers: comment out vendor/model/addr_len/data_len fields
+        echo "Fixing all panel i2c headers..."
+        python3 << 'EOF'
+        import os
+        import re
+
+        base_dir = 'drivers/video/fbdev/exynos/panel'
+        if not os.path.exists(base_dir):
+            print(f"Directory {base_dir} not found")
+        else:
+            for root, dirs, files in os.walk(base_dir):
+                for file in files:
+                    if file.endswith('_i2c.h'):
+                        path = os.path.join(root, file)
+                        with open(path, 'r') as f:
+                            lines = f.readlines()
+                        changed = False
+                        new_lines = []
+                        for line in lines:
+                            if any(field in line for field in ['.vendor', '.model', '.addr_len', '.data_len']):
+                                new_lines.append('/* ' + line.rstrip() + ' */\n')
+                                changed = True
+                                print(f'Commented in {path}: {line.strip()}')
+                            else:
+                                new_lines.append(line)
+                        if changed:
+                            with open(path, 'w') as f:
+                                f.writelines(new_lines)
+                            print(f'Fixed {path}')
+                        else:
+                            print(f'No problematic fields in {path}')
+        EOF
+
         # Fix panel .i2c_data assignments: not in OSS struct common_panel_info
         echo "aW1wb3J0IG9zCgojIEZpeCAuaTJjX2RhdGEgZmllbGQgYXNzaWdubWVudHMgLSBzdHJ1Y3QgY29tbW9uX3BhbmVsX2luZm8gaGFzIG5vIGkyY19kYXRhIGluIE9TUwpmb3Igcm9vdCwgZGlycywgZmlsZXMgaW4gb3Mud2FsaygnZHJpdmVycy92aWRlby9mYmRldi9leHlub3MvcGFuZWwnKToKICAgIGZvciBmbiBpbiBmaWxlczoKICAgICAgICBpZiBmbi5lbmRzd2l0aCgnLmgnKSBvciBmbi5lbmRzd2l0aCgnLmMnKToKICAgICAgICAgICAgZnAgPSBvcy5wYXRoLmpvaW4ocm9vdCwgZm4pCiAgICAgICAgICAgIHRyeToKICAgICAgICAgICAgICAgIHNyYyA9IG9wZW4oZnApLnJlYWQoKQogICAgICAgICAgICBleGNlcHQ6CiAgICAgICAgICAgICAgICBjb250aW51ZQogICAgICAgICAgICBpZiAnLmkyY19kYXRhJyBub3QgaW4gc3JjOgogICAgICAgICAgICAgICAgY29udGludWUKICAgICAgICAgICAgbGluZXMgPSBzcmMuc3BsaXRsaW5lcyhrZWVwZW5kcz1UcnVlKQogICAgICAgICAgICBjaGFuZ2VkID0gMAogICAgICAgICAgICBmb3IgaSwgbCBpbiBlbnVtZXJhdGUobGluZXMpOgogICAgICAgICAgICAgICAgcyA9IGwucnN0cmlwKCkKICAgICAgICAgICAgICAgIGxzID0gcy5sc3RyaXAoKQogICAgICAgICAgICAgICAgaWYgJy5pMmNfZGF0YScgaW4gbHMgYW5kICc9JyBpbiBscyBhbmQgbm90IGxzLnN0YXJ0c3dpdGgoJy8qJykgYW5kIG5vdCBscy5zdGFydHN3aXRoKCcvLycpOgogICAgICAgICAgICAgICAgICAgIGluZGVudCA9IGxlbihzKSAtIGxlbihscykKICAgICAgICAgICAgICAgICAgICBsaW5lc1tpXSA9ICcgJyAqIGluZGVudCArICcvKiBQQVRDSEVEX09VVDogJyArIGxzICsgJyAqLycgKyBjaHIoMTApCiAgICAgICAgICAgICAgICAgICAgY2hhbmdlZCArPSAxCiAgICAgICAgICAgIGlmIGNoYW5nZWQ6CiAgICAgICAgICAgICAgICBvcGVuKGZwLCAndycpLndyaXRlbGluZXMobGluZXMpCiAgICAgICAgICAgICAgICBwcmludChmcCArICc6IHBhdGNoZWQgJyArIHN0cihjaGFuZ2VkKSArICcgLmkyY19kYXRhIGxpbmVzJykKcHJpbnQoJ3BhbmVsIGkyY19kYXRhIGZpeCBkb25lJykK" | base64 -d | python3
         # Fix panel_drv.c: remove from Makefile entirely (PANEL_I2C_* unresolvable in OSS)
@@ -159,34 +193,6 @@ jobs:
         # Fix usb_notifier.c: psy_do_property is a Samsung battery-driver macro not in OSS
         # Without it the compiler sees 'set' as an undeclared identifier (lines ~593, ~632)
         echo "aW1wb3J0IG9zCmYgPSAnZHJpdmVycy91c2Ivbm90aWZ5L3VzYl9ub3RpZmllci5jJwppZiBvcy5wYXRoLmV4aXN0cyhmKToKICAgIHNyYyA9IG9wZW4oZikucmVhZCgpCiAgICBzdHViID0gKAogICAgICAgICcjaWZuZGVmIHBzeV9kb19wcm9wZXJ0eScgKyBjaHIoMTApICsKICAgICAgICAnLyogcHN5X2RvX3Byb3BlcnR5OiBTYW1zdW5nIGJhdHRlcnkgbWFjcm8gLSBzdHViYmVkIChubyBiYXR0ZXJ5IGRyaXZlciBpbiBPU1MpICovJyArIGNocigxMCkgKwogICAgICAgICcjZGVmaW5lIHBzeV9kb19wcm9wZXJ0eShuYW1lLCBmdW5jLCBwcm9wLCB2YWwpIGRvIHt9IHdoaWxlICgwKScgKyBjaHIoMTApICsKICAgICAgICAnI2VuZGlmJyArIGNocigxMCkKICAgICkKICAgIGlmICdwc3lfZG9fcHJvcGVydHknIGluIHNyYyBhbmQgJ2RlZmluZSBwc3lfZG9fcHJvcGVydHknIG5vdCBpbiBzcmM6CiAgICAgICAgb3BlbihmLCAndycpLndyaXRlKHN0dWIgKyBzcmMpCiAgICAgICAgcHJpbnQoJ3VzYl9ub3RpZmllci5jOiBhZGRlZCBwc3lfZG9fcHJvcGVydHkgbm8tb3Agc3R1YicpCiAgICBlbHNlOgogICAgICAgIHByaW50KCd1c2Jfbm90aWZpZXIuYzogcHN5X2RvX3Byb3BlcnR5IGFscmVhZHkgaGFuZGxlZCBvciBub3QgcHJlc2VudCcpCmVsc2U6CiAgICBwcmludCgndXNiX25vdGlmaWVyLmM6IGZpbGUgbm90IGZvdW5kLCBza2lwcGluZycpCg==" | base64 -d | python3
-
-        # Fix ili9882n panel i2c header (comment out vendor/model/addr_len/data_len fields)
-        echo "Fixing ili9882n panel i2c header..."
-        python3 << 'EOF'
-        import os
-
-        path = 'drivers/video/fbdev/exynos/panel/ili9882n/ili9882n_m12s_panel_i2c.h'
-        if os.path.exists(path):
-            with open(path, 'r') as f:
-                lines = f.readlines()
-            changed = False
-            new_lines = []
-            for line in lines:
-                if any(field in line for field in ['.vendor', '.model', '.addr_len', '.data_len']):
-                    new_lines.append('/* ' + line.rstrip() + ' */\n')
-                    changed = True
-                    print(f'Commented: {line.strip()}')
-                else:
-                    new_lines.append(line)
-            if changed:
-                with open(path, 'w') as f:
-                    f.writelines(new_lines)
-                print(f'Fixed {path}')
-            else:
-                print(f'No problematic fields found in {path}')
-        else:
-            print(f'File not found: {path}')
-        EOF
 
         echo "Samsung build fixes applied"
 
