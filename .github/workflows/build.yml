@@ -159,7 +159,36 @@ jobs:
         # Fix usb_notifier.c: psy_do_property is a Samsung battery-driver macro not in OSS
         # Without it the compiler sees 'set' as an undeclared identifier (lines ~593, ~632)
         echo "aW1wb3J0IG9zCmYgPSAnZHJpdmVycy91c2Ivbm90aWZ5L3VzYl9ub3RpZmllci5jJwppZiBvcy5wYXRoLmV4aXN0cyhmKToKICAgIHNyYyA9IG9wZW4oZikucmVhZCgpCiAgICBzdHViID0gKAogICAgICAgICcjaWZuZGVmIHBzeV9kb19wcm9wZXJ0eScgKyBjaHIoMTApICsKICAgICAgICAnLyogcHN5X2RvX3Byb3BlcnR5OiBTYW1zdW5nIGJhdHRlcnkgbWFjcm8gLSBzdHViYmVkIChubyBiYXR0ZXJ5IGRyaXZlciBpbiBPU1MpICovJyArIGNocigxMCkgKwogICAgICAgICcjZGVmaW5lIHBzeV9kb19wcm9wZXJ0eShuYW1lLCBmdW5jLCBwcm9wLCB2YWwpIGRvIHt9IHdoaWxlICgwKScgKyBjaHIoMTApICsKICAgICAgICAnI2VuZGlmJyArIGNocigxMCkKICAgICkKICAgIGlmICdwc3lfZG9fcHJvcGVydHknIGluIHNyYyBhbmQgJ2RlZmluZSBwc3lfZG9fcHJvcGVydHknIG5vdCBpbiBzcmM6CiAgICAgICAgb3BlbihmLCAndycpLndyaXRlKHN0dWIgKyBzcmMpCiAgICAgICAgcHJpbnQoJ3VzYl9ub3RpZmllci5jOiBhZGRlZCBwc3lfZG9fcHJvcGVydHkgbm8tb3Agc3R1YicpCiAgICBlbHNlOgogICAgICAgIHByaW50KCd1c2Jfbm90aWZpZXIuYzogcHN5X2RvX3Byb3BlcnR5IGFscmVhZHkgaGFuZGxlZCBvciBub3QgcHJlc2VudCcpCmVsc2U6CiAgICBwcmludCgndXNiX25vdGlmaWVyLmM6IGZpbGUgbm90IGZvdW5kLCBza2lwcGluZycpCg==" | base64 -d | python3
-                        echo "Samsung build fixes applied"
+
+        # Fix ili9882n panel i2c header (comment out vendor/model/addr_len/data_len fields)
+        echo "Fixing ili9882n panel i2c header..."
+        python3 << 'EOF'
+        import os
+
+        path = 'drivers/video/fbdev/exynos/panel/ili9882n/ili9882n_m12s_panel_i2c.h'
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                lines = f.readlines()
+            changed = False
+            new_lines = []
+            for line in lines:
+                if any(field in line for field in ['.vendor', '.model', '.addr_len', '.data_len']):
+                    new_lines.append('/* ' + line.rstrip() + ' */\n')
+                    changed = True
+                    print(f'Commented: {line.strip()}')
+                else:
+                    new_lines.append(line)
+            if changed:
+                with open(path, 'w') as f:
+                    f.writelines(new_lines)
+                print(f'Fixed {path}')
+            else:
+                print(f'No problematic fields found in {path}')
+        else:
+            print(f'File not found: {path}')
+        EOF
+
+        echo "Samsung build fixes applied"
 
     - name: Apply KernelSU patch
       run: |
