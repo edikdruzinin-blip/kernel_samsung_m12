@@ -309,6 +309,32 @@ jobs:
         scripts/config --enable  CONFIG_PSTORE_RAM       2>/dev/null || true
         scripts/config --enable  CONFIG_PSTORE_CONSOLE   2>/dev/null || true
         scripts/config --set-str CONFIG_CMDLINE ""       2>/dev/null || true
+
+        # ========== ОТКЛЮЧЕНИЕ ЗАЩИТ KNOX / RKP ==========
+        # Real-time Kernel Protection (RKP) - основная причина PROTECTION FAILED
+        scripts/config --disable CONFIG_TIMA_RKP          2>/dev/null || true
+        scripts/config --disable CONFIG_RKP_KDP          2>/dev/null || true
+        scripts/config --disable CONFIG_RKP_KDP_DEBUG    2>/dev/null || true
+        scripts/config --disable CONFIG_RKP_CFP_JOPP     2>/dev/null || true
+        scripts/config --disable CONFIG_RKP_CFP          2>/dev/null || true
+        scripts/config --disable CONFIG_RKP_VER          2>/dev/null || true
+        scripts/config --disable CONFIG_SLP_KDP          2>/dev/null || true
+        # TIMA (TrustZone-based Integrity Measurement)
+        scripts/config --disable CONFIG_TIMA             2>/dev/null || true
+        scripts/config --disable CONFIG_TIMA_LOG         2>/dev/null || true
+        scripts/config --disable CONFIG_TIMA_ENGINE_LOG  2>/dev/null || true
+        scripts/config --disable CONFIG_TIMA_LKMSG       2>/dev/null || true
+        # Другие защиты Knox
+        scripts/config --disable CONFIG_KNOX_KAP         2>/dev/null || true
+        scripts/config --disable CONFIG_SECURE_OS_BOOT   2>/dev/null || true
+        scripts/config --disable CONFIG_SSRM             2>/dev/null || true
+        scripts/config --disable CONFIG_SEC_FACTORY      2>/dev/null || true
+        scripts/config --disable CONFIG_SAMSUNG_PRODUCT_SHIP     2>/dev/null || true
+        scripts/config --disable CONFIG_SEC_RESTRICT_SETUP       2>/dev/null || true
+        scripts/config --disable CONFIG_SEC_RESTRICT_ROOTING     2>/dev/null || true
+        scripts/config --disable CONFIG_SEC_RESTRICT_ROOTING_LOG 2>/dev/null || true
+        # ==================================================
+
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=${{ env.CLANG_PATH }}/clang CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=0 AS=aarch64-linux-gnu-as LD=aarch64-linux-gnu-ld olddefconfig
         grep -E "^CONFIG_(ARM64_VA_BITS|DM_BOW|BLK_DEV_DM|SELINUX)=" .config
 
