@@ -455,14 +455,10 @@ jobs:
         cp kernel/arch/arm64/boot/Image anykernel/
 
         # Copy modules into AnyKernel3 structure
-        # do.modules=2 → AnyKernel installs modules/vendor/lib/modules/ → /vendor/lib/modules/
-        # (Samsung Android 11 uses separate vendor partition, NOT /system/lib/modules)
         MODS_DEST=anykernel/modules/vendor/lib/modules
         mkdir -p "$MODS_DEST"
         if [ -d modules_staging ]; then
-            # Copy .ko files
             find modules_staging -name "*.ko" -exec cp {} "$MODS_DEST/" \;
-            # Copy depmod metadata files so modprobe works on device
             KVER=$(ls modules_staging/lib/modules/ 2>/dev/null | head -1)
             if [ -n "$KVER" ]; then
                 for f in modules.dep modules.alias modules.softdep modules.load modules.order; do
@@ -477,10 +473,9 @@ jobs:
             echo "No modules_staging directory found, skipping modules"
         fi
 
-        echo "IyBBbnlLZXJuZWwzIFJhbWRpc2sgTW9kIFNjcmlwdAojIFNNLU0xMjdGIFZhbmlsbGEgQm9vdCBUZXN0Cgpwcm9wZXJ0aWVzKCkgeyAnCmtlcm5lbC5zdHJpbmc9U00tTTEyN0YgVmFuaWxsYSBEZWJ1ZyBUZXN0CmRvLmRldmljZWNoZWNrPTAKZG8ubW9kdWxlcz0wCmRvLnN5c3RlbWxlc3M9MApkby5jbGVhbnVwPTEKZG8uY2xlYW51cG9uYWJvcnQ9MApkZXZpY2UubmFtZTE9bTEyCmRldmljZS5uYW1lMj1tMTJuYWNobwpkZXZpY2UubmFtZTM9U00tTTEyN0YKZGV2aWNlLm5hbWU0PVNNLUExMjdGCmRldmljZS5uYW1lNT1hMTJzCnN1cHBvcnRlZC52ZXJzaW9ucz0xMQonOyB9CgpibG9jaz0vZGV2L2Jsb2NrL3BsYXRmb3JtLzEyMTAwMDAwLmR3bW1jMC9ieS1uYW1lL2Jvb3Q7CmlzX3Nsb3RfZGV2aWNlPTA7CnJhbWRpc2tfY29tcHJlc3Npb249YXV0bzsKCi4gdG9vbHMvYWszLWNvcmUuc2g7CgpkdW1wX2Jvb3Q7CgpwYXRjaF9jbWRsaW5lICJhbmRyb2lkYm9vdC5zZWxpbnV4IiAiYW5kcm9pZGJvb3Quc2VsaW51eD1wZXJtaXNzaXZlIjsKcGF0Y2hfY21kbGluZSAiZW5mb3JjaW5nIiAiZW5mb3JjaW5nPTAiOwpwYXRjaF9jbWRsaW5lICJpbml0Y2FsbF9kZWJ1ZyIgImluaXRjYWxsX2RlYnVnPTEiOwojIFByZXZlbnQgaW5zdGFudCByZWJvb3Qgb24ga2VybmVsIG9vcHMgc28gcHN0b3JlIGhhcyB0aW1lIHRvIHdyaXRlCnBhdGNoX2NtZGxpbmUgIm9vcHMiICJvb3BzPTAiOwoj Дополнительные параметры для обхода защиты загрузчика
-patch_cmdline "androidboot.verifiedbootstate" "androidboot.verifiedbootstate=orange"
-patch_cmdline "androidboot.veritymode" "androidboot.veritymode=disabled"
-patch_cmdline "androidboot.vbmeta.device_state" "androidboot.vbmeta.device_state=unlocked"
-patch_cmdline "skip_override" "skip_override"
+        echo "IyBBbnlLZXJuZWwzIFJhbWRpc2sgTW9kIFNjcmlwdAojIFNNLU0xMjdGIFZhbmlsbGEgQm9vdCBUZXN0Cgpwcm9wZXJ0aWVzKCkgeyAnCmtlcm5lbC5zdHJpbmc9U00tTTEyN0YgVmFuaWxsYSBEZWJ1ZyBUZXN0CmRvLmRldmljZWNoZWNrPTAKZG8ubW9kdWxlcz0wCmRvLnN5c3RlbWxlc3M9MApkby5jbGVhbnVwPTEKZG8uY2xlYW51cG9uYWJvcnQ9MApkZXZpY2UubmFtZTE9bTEyCmRldmljZS5uYW1lMj1tMTJuYWNobwpkZXZpY2UubmFtZTM9U00tTTEyN0YKZGV2aWNlLm5hbWU0PVNNLUExMjdGCmRldmljZS5uYW1lNT1hMTJzCnN1cHBvcnRlZC52ZXJzaW9ucz0xMQonOyB9CgpibG9jaz0vZGV2L2Jsb2NrL3BsYXRmb3JtLzEyMTAwMDAwLmR3bW1jMC9ieS1uYW1lL2Jvb3Q7CmlzX3Nsb3RfZGV2aWNlPTA7CnJhbWRpc2tfY29tcHJlc3Npb249YXV0bzsKCi4gdG9vbHMvYWszLWNvcmUuc2g7CgpkdW1wX2Jvb3Q7CgpwYXRjaF9jbWRsaW5lICJhbmRyb2lkYm9vdC5zZWxpbnV4IiAiYW5kcm9pZGJvb3Quc2VsaW51eD1wZXJtaXNzaXZlIjsKcGF0Y2hfY21kbGluZSAiZW5mb3JjaW5nIiAiZW5mb3JjaW5nPTAiOwpwYXRjaF9jbWRsaW5lICJpbml0Y2FsbF9kZWJ1ZyIgImluaXRjYWxsX2RlYnVnPTEiOwojIFByZXZlbnQgaW5zdGFudCByZWJvb3Qgb24ga2VybmVsIG9vcHMgc28gcHN0b3JlIGhhcyB0aW1lIHRvIHdyaXRlCnBhdGNoX2NtZGxpbmUgIm9vcHMiICJvb3BzPTAiOwojIEFkZGl0aW9uYWwgY21kbGluZSB0byBieXBhc3MgYm9vdGxvYWRlciBwcm90ZWN0aW9ucwpwYXRjaF9jbWRsaW5lICJhbmRyb2lkYm9vdC52ZXJpZmllZGJvb3RzdGF0ZSIgImFuZHJvaWRib290LnZlcmlmaWVkYm9vdHN0YXRlPW9yYW5nZSI7CnBhdGNoX2NtZGxpbmUgImFuZHJvaWRib290LnZlcml0eW1vZGUiICJhbmRyb2lkYm9vdC52ZXJpdHltb2RlPWRpc2FibGVkIjsKcGF0Y2hfY21kbGluZSAiYW5kcm9pZGJvb3QudmJtZXRhLmRldmljZV9zdGF0ZSIgImFuZHJvaWRib290LnZibWV0YS5kZXZpY2Vfc3RhdGU9dW5sb2NrZWQiOwpwYXRjaF9jbWRsaW5lICJza2lwX292ZXJyaWRlIiAic2tpcF9vdmVycmlkZSI7Cgp3cml0ZV9ib290Owo=" | base64 -d > anykernel/anykernel.sh
 
-write_boot;
+        cd anykernel && zip -r9 ../SM-M127F_Vanilla.zip . -x "*.git*" "*.github*" "*.md"
+        ls -lh ../SM-M127F_Vanilla.zip
+        echo "=== ZIP contents (modules) ==="
+        unzip -l ../SM-M127F_Vanilla.zip | grep "\.ko" | wc -l | xargs echo "Total .ko files in zip:"
